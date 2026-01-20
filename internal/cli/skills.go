@@ -5,9 +5,10 @@ import (
 )
 
 var skillsCmd = &cobra.Command{
-	Use:   "skills",
-	Short: "Manage Claude Code skills",
-	Long:  `Manage Claude Code skills in ~/.claude/skills/ directory.`,
+	Use:     "skills",
+	Aliases: []string{"s"},
+	Short:   "Manage Claude Code skills",
+	Long:    `Manage Claude Code skills in ~/.claude/skills/ directory.`,
 }
 
 func init() {

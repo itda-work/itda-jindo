@@ -5,9 +5,10 @@ import (
 )
 
 var commandsCmd = &cobra.Command{
-	Use:   "commands",
-	Short: "Manage Claude Code commands",
-	Long:  `Manage Claude Code commands in ~/.claude/commands/ directory.`,
+	Use:     "commands",
+	Aliases: []string{"c"},
+	Short:   "Manage Claude Code commands",
+	Long:    `Manage Claude Code commands in ~/.claude/commands/ directory.`,
 }
 
 func init() {
