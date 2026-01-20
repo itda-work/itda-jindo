@@ -94,18 +94,82 @@ func NewStore(baseDir string) *Store {
 	return &Store{baseDir: baseDir}
 }
 
-// List returns all skills in the store
-func (s *Store) List() ([]*Skill, error) {
-	var skills []*Skill
-
-	// Expand ~ to home directory
+// expandDir expands ~ to home directory
+func (s *Store) expandDir() (string, error) {
 	dir := s.baseDir
 	if strings.HasPrefix(dir, "~/") {
 		home, err := os.UserHomeDir()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		dir = filepath.Join(home, dir[2:])
+	}
+	return dir, nil
+}
+
+// Get retrieves a specific skill by name
+func (s *Store) Get(name string) (*Skill, error) {
+	dir, err := s.expandDir()
+	if err != nil {
+		return nil, err
+	}
+
+	skillDir := filepath.Join(dir, name)
+
+	// Try SKILL.md first, then skill.md
+	skillFile := filepath.Join(skillDir, "SKILL.md")
+	if _, err := os.Stat(skillFile); os.IsNotExist(err) {
+		skillFile = filepath.Join(skillDir, "skill.md")
+		if _, err := os.Stat(skillFile); os.IsNotExist(err) {
+			return nil, os.ErrNotExist
+		}
+	}
+
+	skill, err := ParseSkillFile(skillFile)
+	if err != nil {
+		return nil, err
+	}
+
+	if skill.Name == "" {
+		skill.Name = name
+	}
+
+	return skill, nil
+}
+
+// GetContent retrieves the full content of a skill file
+func (s *Store) GetContent(name string) (string, error) {
+	dir, err := s.expandDir()
+	if err != nil {
+		return "", err
+	}
+
+	skillDir := filepath.Join(dir, name)
+
+	// Try SKILL.md first, then skill.md
+	skillFile := filepath.Join(skillDir, "SKILL.md")
+	if _, err := os.Stat(skillFile); os.IsNotExist(err) {
+		skillFile = filepath.Join(skillDir, "skill.md")
+		if _, err := os.Stat(skillFile); os.IsNotExist(err) {
+			return "", os.ErrNotExist
+		}
+	}
+
+	content, err := os.ReadFile(skillFile)
+	if err != nil {
+		return "", err
+	}
+
+	return string(content), nil
+}
+
+// List returns all skills in the store
+func (s *Store) List() ([]*Skill, error) {
+	var skills []*Skill
+
+	dir, err := s.expandDir()
+	if err != nil {
+		return nil, err
 	}
 
 	entries, err := os.ReadDir(dir)
