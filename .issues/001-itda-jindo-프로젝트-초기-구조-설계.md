@@ -1,12 +1,13 @@
 ---
 number: 1
 title: itda-jindo 프로젝트 초기 구조 설계
-state: open
+state: done
 labels:
   - epic
 assignees: []
 created_at: '2026-01-20T10:42:50Z'
-updated_at: '2026-01-20T10:42:50Z'
+updated_at: '2026-01-20T14:22:16Z'
+closed_at: '2026-01-20T14:22:16Z'
 ---
 
 ## 개요
