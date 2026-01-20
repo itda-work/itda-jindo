@@ -1,12 +1,13 @@
 ---
 number: 18
 title: CLI 명령 jindo → jd 변경 및 서브커맨드 단축 별칭 추가
-state: wip
+state: done
 labels:
   - refactor
 assignees: []
 created_at: '2026-01-20T13:02:20Z'
-updated_at: '2026-01-20T13:02:34Z'
+updated_at: '2026-01-20T13:04:28Z'
+closed_at: '2026-01-20T13:04:28Z'
 ---
 
 ## 변경 사항
