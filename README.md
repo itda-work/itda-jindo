@@ -19,18 +19,38 @@ A CLI tool for managing Claude Code configurations including skills, commands, a
 
 ### Quick Install (Recommended)
 
+#### macOS / Linux
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/itda-work/itda-jindo/main/install.sh | bash
 ```
 
+#### Windows (PowerShell)
+
+```powershell
+irm https://raw.githubusercontent.com/itda-work/itda-jindo/main/install.ps1 | iex
+```
+
 ### Custom Installation
+
+#### macOS / Linux
 
 ```bash
 # Install to a custom directory
 INSTALL_DIR=~/bin curl -fsSL https://raw.githubusercontent.com/itda-work/itda-jindo/main/install.sh | bash
 
 # Install a specific version
-VERSION=v1.0.0 curl -fsSL https://raw.githubusercontent.com/itda-work/itda-jindo/main/install.sh | bash
+VERSION=v0.1.0 curl -fsSL https://raw.githubusercontent.com/itda-work/itda-jindo/main/install.sh | bash
+```
+
+#### Windows (PowerShell)
+
+```powershell
+# Install to a custom directory
+$env:INSTALL_DIR = "C:\tools"; irm https://raw.githubusercontent.com/itda-work/itda-jindo/main/install.ps1 | iex
+
+# Install a specific version
+$env:VERSION = "v0.1.0"; irm https://raw.githubusercontent.com/itda-work/itda-jindo/main/install.ps1 | iex
 ```
 
 ### Build from Source

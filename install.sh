@@ -47,7 +47,7 @@ detect_os() {
     os="$(uname -s)"
     case "$os" in
         Darwin)
-            echo "darwin"
+            echo "macos"
             ;;
         Linux)
             echo "linux"
@@ -109,8 +109,11 @@ install() {
     fi
 
     # Construct download URL
-    # Expected format: jd_<version>_<os>_<arch>.tar.gz
-    local filename="${BINARY}_${version#v}_${os}_${arch}.tar.gz"
+    # Expected format: jd-<os>-<arch> (or jd-<os>-<arch>.exe for Windows)
+    local filename="${BINARY}-${os}-${arch}"
+    if [ "$os" = "windows" ]; then
+        filename="${filename}.exe"
+    fi
     download_url="https://github.com/${REPO}/releases/download/${version}/${filename}"
 
     info "Downloading from: $download_url"
@@ -120,13 +123,9 @@ install() {
     trap "rm -rf $tmp_dir" EXIT
 
     # Download
-    if ! curl -fsSL "$download_url" -o "$tmp_dir/$filename"; then
+    if ! curl -fsSL "$download_url" -o "$tmp_dir/$BINARY"; then
         error "Failed to download $download_url"
     fi
-
-    # Extract
-    info "Extracting..."
-    tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"
 
     # Install
     info "Installing to $INSTALL_DIR..."
