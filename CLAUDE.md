@@ -1,6 +1,6 @@
 # itda-jindo
 
-# zap - Local Issue Management
+## zap - Local Issue Management
 
 이 프로젝트는 로컬 이슈 관리 시스템(.issues/)을 사용합니다.
 
@@ -18,7 +18,7 @@ zap show 10
 
 ## .issues/ 디렉토리 구조
 
-```
+```text
 .issues/
 ├── 001-feat-some-feature.md     # state: open
 ├── 002-fix-some-bug.md          # state: wip
@@ -61,7 +61,7 @@ zap new "이슈 제목" --editor
 ```markdown
 ---
 number: 1
-title: "이슈 제목"
+title: '이슈 제목'
 state: open
 labels:
   - bug

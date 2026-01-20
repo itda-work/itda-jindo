@@ -1,0 +1,21 @@
+# Binary
+/jindo
+/jindo-*
+/dist/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage.out
+coverage.html
+
+# Node (pre-commit hooks)
+node_modules/

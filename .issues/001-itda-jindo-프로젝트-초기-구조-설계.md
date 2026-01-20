@@ -5,8 +5,8 @@ state: open
 labels:
   - epic
 assignees: []
-created_at: "2026-01-20T10:42:50Z"
-updated_at: "2026-01-20T10:42:50Z"
+created_at: '2026-01-20T10:42:50Z'
+updated_at: '2026-01-20T10:42:50Z'
 ---
 
 ## 개요
@@ -15,7 +15,7 @@ Golang 기반 itda-jindo CLI와 Claude Code 리소스 구조를 설계하고 구
 
 ## 목표 구조
 
-```
+```text
 itda-jindo/
 ├── cmd/itda-jindo/                  # Go CLI 엔트리포인트
 ├── internal/                      # Go 내부 패키지
