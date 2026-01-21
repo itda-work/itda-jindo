@@ -99,8 +99,8 @@ install() {
     info "Detected Architecture: $arch"
 
     # Get version
-    if [ -n "$VERSION" ]; then
-        version="$VERSION"
+    if [ -n "${VERSION:-}" ]; then
+        version="${VERSION}"
         info "Using specified version: $version"
     else
         info "Fetching latest version..."
