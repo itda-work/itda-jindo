@@ -12,8 +12,9 @@ import (
 var skillsEditEditor bool
 
 var skillsEditCmd = &cobra.Command{
-	Use:   "edit <skill-name>",
-	Short: "Edit an existing skill",
+	Use:     "edit <skill-name>",
+	Aliases: []string{"e"},
+	Short:   "Edit an existing skill",
 	Long: `Edit an existing skill in ~/.claude/skills/ directory.
 
 By default, uses Claude CLI to interactively edit the skill content.

@@ -17,8 +17,9 @@ var (
 )
 
 var pkgBrowseCmd = &cobra.Command{
-	Use:   "browse [namespace]",
-	Short: "Browse packages in repositories",
+	Use:     "browse [namespace]",
+	Aliases: []string{"b"},
+	Short:   "Browse packages in repositories",
 	Long: `Browse available packages (skills, commands, agents, hooks) in registered repositories.
 
 Without arguments, opens an interactive TUI to browse all registered repositories.

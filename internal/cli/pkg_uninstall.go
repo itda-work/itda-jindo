@@ -10,7 +10,7 @@ import (
 
 var pkgUninstallCmd = &cobra.Command{
 	Use:     "uninstall <name>",
-	Aliases: []string{"rm", "remove"},
+	Aliases: []string{"un", "rm", "remove"},
 	Short:   "Uninstall an installed package",
 	Long: `Uninstall a package by its installed name.
 

@@ -460,17 +460,19 @@ func (m Model) renderList(width, height int) string {
 				}
 
 				name := item.Name
-				if globalIdx == m.cursor {
-					name = selectedStyle.Render(name)
-				}
 
-				// Truncate name if too long
+				// Truncate name if too long (before applying styles)
 				maxNameLen := width - 10
 				if maxNameLen < 10 {
 					maxNameLen = 10
 				}
 				if len(name) > maxNameLen {
 					name = name[:maxNameLen-3] + "..."
+				}
+
+				// Apply style after truncation to preserve ANSI escape codes
+				if globalIdx == m.cursor {
+					name = selectedStyle.Render(name)
 				}
 
 				line := fmt.Sprintf("%s%s %s", cursor, checkbox, name)

@@ -13,7 +13,7 @@ var pkgListJSON bool
 
 var pkgListCmd = &cobra.Command{
 	Use:     "list",
-	Aliases: []string{"ls"},
+	Aliases: []string{"l", "ls"},
 	Short:   "List installed packages",
 	Long:    `List all installed packages from registered repositories.`,
 	RunE:    runPkgList,

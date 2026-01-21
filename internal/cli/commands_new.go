@@ -17,8 +17,9 @@ var (
 )
 
 var commandsNewCmd = &cobra.Command{
-	Use:   "new <command-name>",
-	Short: "Create a new command",
+	Use:     "new <command-name>",
+	Aliases: []string{"n"},
+	Short:   "Create a new command",
 	Long: `Create a new command in ~/.claude/commands/ directory.
 
 By default, uses Claude CLI to interactively generate the command content.

@@ -17,8 +17,9 @@ var (
 )
 
 var agentsNewCmd = &cobra.Command{
-	Use:   "new <agent-name>",
-	Short: "Create a new agent",
+	Use:     "new <agent-name>",
+	Aliases: []string{"n"},
+	Short:   "Create a new agent",
 	Long: `Create a new agent in ~/.claude/agents/ directory.
 
 By default, uses Claude CLI to interactively generate the agent content.

@@ -13,7 +13,7 @@ var skillsListJSON bool
 
 var skillsListCmd = &cobra.Command{
 	Use:     "list",
-	Aliases: []string{"ls"},
+	Aliases: []string{"l", "ls"},
 	Short:   "List all skills",
 	Long:    `List all skills from ~/.claude/skills/ directory.`,
 	RunE:    runSkillsList,

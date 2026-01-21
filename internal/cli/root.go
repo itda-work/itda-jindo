@@ -11,7 +11,8 @@ var rootCmd = &cobra.Command{
 	Long: `jd is a CLI tool for managing Claude Code configurations
 including skills, commands, and agents.
 
-Subcommand aliases: skills(s), commands(c), agents(a)
+Subcommand aliases: skills(s), commands(c), agents(a), pkg(p), list(l)
+Subcommand aliases: list(l), new(n), show(s), edit(e), delete(d,rm)
 
 Use 'jd --help' for all available commands.`,
 }

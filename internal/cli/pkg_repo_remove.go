@@ -10,7 +10,7 @@ import (
 
 var pkgRepoRemoveCmd = &cobra.Command{
 	Use:     "remove <namespace>",
-	Aliases: []string{"rm"},
+	Aliases: []string{"r", "rm"},
 	Short:   "Remove a registered repository",
 	Long: `Remove a registered repository by its namespace.
 

@@ -13,7 +13,7 @@ var agentsListJSON bool
 
 var agentsListCmd = &cobra.Command{
 	Use:     "list",
-	Aliases: []string{"ls"},
+	Aliases: []string{"l", "ls"},
 	Short:   "List all agents",
 	Long:    `List all agents from ~/.claude/agents/ directory.`,
 	RunE:    runAgentsList,

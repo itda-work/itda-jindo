@@ -15,7 +15,7 @@ var skillsDeleteForce bool
 
 var skillsDeleteCmd = &cobra.Command{
 	Use:     "delete <skill-name>",
-	Aliases: []string{"rm"},
+	Aliases: []string{"d", "rm"},
 	Short:   "Delete a skill",
 	Long: `Delete a skill from ~/.claude/skills/ directory.
 

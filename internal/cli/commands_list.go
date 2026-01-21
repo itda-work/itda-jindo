@@ -13,7 +13,7 @@ var commandsListJSON bool
 
 var commandsListCmd = &cobra.Command{
 	Use:     "list",
-	Aliases: []string{"ls"},
+	Aliases: []string{"l", "ls"},
 	Short:   "List all commands",
 	Long:    `List all commands from ~/.claude/commands/ directory.`,
 	RunE:    runCommandsList,

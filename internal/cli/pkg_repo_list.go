@@ -13,7 +13,7 @@ var pkgRepoListJSON bool
 
 var pkgRepoListCmd = &cobra.Command{
 	Use:     "list",
-	Aliases: []string{"ls"},
+	Aliases: []string{"l", "ls"},
 	Short:   "List registered repositories",
 	Long:    `List all registered GitHub repositories.`,
 	RunE:    runPkgRepoList,

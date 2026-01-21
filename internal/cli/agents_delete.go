@@ -14,7 +14,7 @@ var agentsDeleteForce bool
 
 var agentsDeleteCmd = &cobra.Command{
 	Use:     "delete <agent-name>",
-	Aliases: []string{"rm"},
+	Aliases: []string{"d", "rm"},
 	Short:   "Delete an agent",
 	Long: `Delete an agent from ~/.claude/agents/ directory.
 

@@ -12,8 +12,9 @@ import (
 var skillsShowBrief bool
 
 var skillsShowCmd = &cobra.Command{
-	Use:   "show <skill-name>",
-	Short: "Show skill details",
+	Use:     "show <skill-name>",
+	Aliases: []string{"s"},
+	Short:   "Show skill details",
 	Long:  `Show the full content of a specific skill from ~/.claude/skills/ directory.`,
 	Args:  cobra.ExactArgs(1),
 	RunE:  runSkillsShow,

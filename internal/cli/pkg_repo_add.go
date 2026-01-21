@@ -14,8 +14,9 @@ import (
 var pkgRepoAddNamespace string
 
 var pkgRepoAddCmd = &cobra.Command{
-	Use:   "add <gh:owner/repo>",
-	Short: "Register a GitHub repository",
+	Use:     "add <gh:owner/repo>",
+	Aliases: []string{"a"},
+	Short:   "Register a GitHub repository",
 	Long: `Register a GitHub repository containing Claude Code packages.
 
 The repository URL must be in the format: gh:owner/repo

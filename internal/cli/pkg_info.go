@@ -12,8 +12,9 @@ import (
 var pkgInfoJSON bool
 
 var pkgInfoCmd = &cobra.Command{
-	Use:   "info <name>",
-	Short: "Show detailed information about an installed package",
+	Use:     "info <name>",
+	Aliases: []string{"in"},
+	Short:   "Show detailed information about an installed package",
 	Long: `Show detailed information about an installed package.
 
 Use 'jd pkg list' to see installed package names.

@@ -9,8 +9,9 @@ import (
 )
 
 var pkgInstallCmd = &cobra.Command{
-	Use:   "install <namespace:path[@version]>",
-	Short: "Install a package from a registered repository",
+	Use:     "install <namespace:path[@version]>",
+	Aliases: []string{"i"},
+	Short:   "Install a package from a registered repository",
 	Long: `Install a package from a registered repository.
 
 The specification format is: namespace:path[@version]

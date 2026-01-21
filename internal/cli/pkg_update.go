@@ -11,8 +11,9 @@ import (
 var pkgUpdateApply bool
 
 var pkgUpdateCmd = &cobra.Command{
-	Use:   "update [name...]",
-	Short: "Check for and apply package updates",
+	Use:     "update [name...]",
+	Aliases: []string{"up"},
+	Short:   "Check for and apply package updates",
 	Long: `Check for updates to installed packages.
 
 Without --apply, shows available updates.

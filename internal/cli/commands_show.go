@@ -11,8 +11,9 @@ import (
 var commandsShowBrief bool
 
 var commandsShowCmd = &cobra.Command{
-	Use:   "show <command-name>",
-	Short: "Show command details",
+	Use:     "show <command-name>",
+	Aliases: []string{"s"},
+	Short:   "Show command details",
 	Long:  `Show the full content of a specific command from ~/.claude/commands/ directory.`,
 	Args:  cobra.ExactArgs(1),
 	RunE:  runCommandsShow,

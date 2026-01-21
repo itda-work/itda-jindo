@@ -12,8 +12,9 @@ import (
 var commandsEditEditor bool
 
 var commandsEditCmd = &cobra.Command{
-	Use:   "edit <command-name>",
-	Short: "Edit an existing command",
+	Use:     "edit <command-name>",
+	Aliases: []string{"e"},
+	Short:   "Edit an existing command",
 	Long: `Edit an existing command in ~/.claude/commands/ directory.
 
 By default, uses Claude CLI to interactively edit the command content.

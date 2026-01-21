@@ -18,8 +18,9 @@ var (
 )
 
 var skillsNewCmd = &cobra.Command{
-	Use:   "new <skill-name>",
-	Short: "Create a new skill",
+	Use:     "new <skill-name>",
+	Aliases: []string{"n"},
+	Short:   "Create a new skill",
 	Long: `Create a new skill in ~/.claude/skills/ directory.
 
 By default, uses Claude CLI to interactively generate the skill content.

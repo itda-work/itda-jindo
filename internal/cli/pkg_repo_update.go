@@ -8,8 +8,9 @@ import (
 )
 
 var pkgRepoUpdateCmd = &cobra.Command{
-	Use:   "update [namespace...]",
-	Short: "Update registered repositories",
+	Use:     "update [namespace...]",
+	Aliases: []string{"u", "up"},
+	Short:   "Update registered repositories",
 	Long: `Pull the latest changes for registered repositories.
 
 Without arguments, updates all registered repositories.

@@ -12,8 +12,9 @@ import (
 var agentsEditEditor bool
 
 var agentsEditCmd = &cobra.Command{
-	Use:   "edit <agent-name>",
-	Short: "Edit an existing agent",
+	Use:     "edit <agent-name>",
+	Aliases: []string{"e"},
+	Short:   "Edit an existing agent",
 	Long: `Edit an existing agent in ~/.claude/agents/ directory.
 
 By default, uses Claude CLI to interactively edit the agent content.

@@ -13,8 +13,9 @@ import (
 var pkgSearchJSON bool
 
 var pkgSearchCmd = &cobra.Command{
-	Use:   "search <query>",
-	Short: "Search for packages across all registered repositories",
+	Use:     "search <query>",
+	Aliases: []string{"se"},
+	Short:   "Search for packages across all registered repositories",
 	Long: `Search for packages by name across all registered repositories.
 
 The search is case-insensitive and matches package names containing the query.

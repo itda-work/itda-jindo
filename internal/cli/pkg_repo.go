@@ -5,8 +5,9 @@ import (
 )
 
 var pkgRepoCmd = &cobra.Command{
-	Use:   "repo",
-	Short: "Manage registered package repositories",
+	Use:     "repo",
+	Aliases: []string{"r"},
+	Short:   "Manage registered package repositories",
 	Long:  `Manage GitHub repositories that contain Claude Code packages (skills, commands, agents).`,
 }
 

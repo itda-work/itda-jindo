@@ -14,7 +14,7 @@ var commandsDeleteForce bool
 
 var commandsDeleteCmd = &cobra.Command{
 	Use:     "delete <command-name>",
-	Aliases: []string{"rm"},
+	Aliases: []string{"d", "rm"},
 	Short:   "Delete a command",
 	Long: `Delete a command from ~/.claude/commands/ directory.
 

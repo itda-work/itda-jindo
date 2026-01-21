@@ -11,8 +11,9 @@ import (
 var agentsShowBrief bool
 
 var agentsShowCmd = &cobra.Command{
-	Use:   "show <agent-name>",
-	Short: "Show agent details",
+	Use:     "show <agent-name>",
+	Aliases: []string{"s"},
+	Short:   "Show agent details",
 	Long:  `Show the full content of a specific agent from ~/.claude/agents/ directory.`,
 	Args:  cobra.ExactArgs(1),
 	RunE:  runAgentsShow,
