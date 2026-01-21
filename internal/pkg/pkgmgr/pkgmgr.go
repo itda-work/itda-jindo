@@ -34,7 +34,8 @@ var installSpecRegex = regexp.MustCompile(`^([a-z0-9-]+):(.+?)(?:@(.+))?$`)
 
 // Manager manages installed packages.
 type Manager struct {
-	baseDir   string
+	baseDir   string          // ~/.itda-jindo (for metadata: installed.json, repos)
+	claudeDir string          // ~/.claude (for actual installed files)
 	repoStore *repo.Store
 }
 
@@ -42,13 +43,23 @@ type Manager struct {
 func NewManager(baseDir string) *Manager {
 	return &Manager{
 		baseDir:   baseDir,
+		claudeDir: "~/.claude",
 		repoStore: repo.NewStore(baseDir),
 	}
 }
 
-// expandDir expands ~ to home directory.
+// expandDir expands ~ to home directory for baseDir.
 func (m *Manager) expandDir() (string, error) {
-	dir := m.baseDir
+	return expandPath(m.baseDir)
+}
+
+// expandClaudeDir expands ~ to home directory for claudeDir.
+func (m *Manager) expandClaudeDir() (string, error) {
+	return expandPath(m.claudeDir)
+}
+
+// expandPath expands ~ to home directory.
+func expandPath(dir string) (string, error) {
 	if strings.HasPrefix(dir, "~/") {
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -240,8 +251,8 @@ func (m *Manager) Install(specStr string) (*InstalledPackage, error) {
 		currentSHA = "unknown"
 	}
 
-	// Install files from local clone
-	baseDir, err := m.expandDir()
+	// Install files to ~/.claude directory
+	claudeDir, err := m.expandClaudeDir()
 	if err != nil {
 		return nil, err
 	}
@@ -250,13 +261,13 @@ func (m *Manager) Install(specStr string) (*InstalledPackage, error) {
 
 	switch pkgType {
 	case repo.TypeSkill:
-		files, err = m.installSkill(repoLocalPath, spec.Path, namespacedName, baseDir)
+		files, err = m.installSkill(repoLocalPath, spec.Path, namespacedName, claudeDir)
 	case repo.TypeCommand:
-		files, err = m.installCommand(repoLocalPath, spec.Path, namespacedName, baseDir)
+		files, err = m.installCommand(repoLocalPath, spec.Path, namespacedName, claudeDir)
 	case repo.TypeAgent:
-		files, err = m.installAgent(repoLocalPath, spec.Path, namespacedName, baseDir)
+		files, err = m.installAgent(repoLocalPath, spec.Path, namespacedName, claudeDir)
 	case repo.TypeHook:
-		files, err = m.installHook(repoLocalPath, spec.Path, namespacedName, baseDir)
+		files, err = m.installHook(repoLocalPath, spec.Path, namespacedName, claudeDir)
 	}
 
 	if err != nil {

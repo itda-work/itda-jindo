@@ -65,12 +65,19 @@ type PackageItem struct {
 	Selected    bool
 }
 
+// installDoneMsg is sent when installation completes
+type installDoneMsg struct {
+	count  int
+	errors []string
+}
+
 // Model represents the TUI state
 type Model struct {
 	tabs            []Tab
 	activeTab       Tab
 	items           map[Tab][]PackageItem
 	cursor          int
+	listOffset      int    // Scroll offset for list panel
 	width           int
 	height          int
 	manager         *pkgmgr.Manager
@@ -78,6 +85,7 @@ type Model struct {
 	quitting        bool
 	preview         string // Cached preview content
 	namespaceFilter string // Filter by namespace (empty = all)
+	installing      bool   // True while installation is in progress
 }
 
 // Styles
@@ -305,7 +313,51 @@ func (m *Model) updatePreview() {
 	}
 
 	item := items[m.cursor]
-	m.preview = loadPreview(item.LocalPath, 30)
+	m.preview = loadPreview(item.LocalPath, 50)
+}
+
+// listVisibleHeight returns the number of visible lines in the list panel
+func (m *Model) listVisibleHeight() int {
+	headerHeight := 5  // title + tabs + separator
+	footerHeight := 4  // message + help
+	contentHeight := m.height - headerHeight - footerHeight
+	if contentHeight < 5 {
+		contentHeight = 5
+	}
+	return contentHeight
+}
+
+// adjustListScroll adjusts listOffset to keep cursor visible
+func (m *Model) adjustListScroll() {
+	visibleHeight := m.listVisibleHeight()
+
+	// Count total lines including namespace headers
+	items := m.items[m.activeTab]
+	namespaces := make(map[string]bool)
+	lineIndex := 0
+	cursorLine := 0
+
+	for i, item := range items {
+		if !namespaces[item.Namespace] {
+			namespaces[item.Namespace] = true
+			lineIndex++ // namespace header line
+		}
+		if i == m.cursor {
+			cursorLine = lineIndex
+		}
+		lineIndex++
+	}
+
+	// Adjust offset to keep cursor in view
+	if cursorLine < m.listOffset {
+		m.listOffset = cursorLine
+	}
+	if cursorLine >= m.listOffset+visibleHeight {
+		m.listOffset = cursorLine - visibleHeight + 1
+	}
+	if m.listOffset < 0 {
+		m.listOffset = 0
+	}
 }
 
 // getCurrentItem returns the currently selected item or nil
@@ -330,7 +382,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		return m, nil
 
+	case installDoneMsg:
+		m.installing = false
+		if msg.count > 0 {
+			m.message = fmt.Sprintf("✓ Installed %d package(s)", msg.count)
+		}
+		if len(msg.errors) > 0 {
+			if m.message != "" {
+				m.message += " | "
+			}
+			m.message += fmt.Sprintf("✗ %d error(s)", len(msg.errors))
+		}
+		return m, nil
+
 	case tea.KeyMsg:
+		// Ignore key presses while installing
+		if m.installing {
+			return m, nil
+		}
+
 		// Clear message on any key press
 		m.message = ""
 
@@ -342,18 +412,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, keys.Tab), key.Matches(msg, keys.Right):
 			m.activeTab = Tab((int(m.activeTab) + 1) % len(m.tabs))
 			m.cursor = 0
+			m.listOffset = 0
 			m.updatePreview()
 			return m, nil
 
 		case key.Matches(msg, keys.Left):
 			m.activeTab = Tab((int(m.activeTab) - 1 + len(m.tabs)) % len(m.tabs))
 			m.cursor = 0
+			m.listOffset = 0
 			m.updatePreview()
 			return m, nil
 
 		case key.Matches(msg, keys.Up):
 			if m.cursor > 0 {
 				m.cursor--
+				m.adjustListScroll()
 				m.updatePreview()
 			}
 			return m, nil
@@ -362,6 +435,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			items := m.items[m.activeTab]
 			if m.cursor < len(items)-1 {
 				m.cursor++
+				m.adjustListScroll()
 				m.updatePreview()
 			}
 			return m, nil
@@ -395,6 +469,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, keys.Install):
+			// Check if any packages are selected
+			hasSelected := false
+			for tab := range m.items {
+				for _, item := range m.items[tab] {
+					if item.Selected && !item.IsInstalled {
+						hasSelected = true
+						break
+					}
+				}
+				if hasSelected {
+					break
+				}
+			}
+			if !hasSelected {
+				m.message = "No packages selected"
+				return m, nil
+			}
+			m.installing = true
+			m.message = "Installing..."
 			return m, m.installSelected()
 		}
 	}
@@ -406,6 +499,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *Model) installSelected() tea.Cmd {
 	return func() tea.Msg {
 		var installedCount int
+		var errors []string
 		for tab := range m.items {
 			for i := range m.items[tab] {
 				item := &m.items[tab][i]
@@ -416,25 +510,23 @@ func (m *Model) installSelected() tea.Cmd {
 						item.IsInstalled = true
 						item.Selected = false
 						installedCount++
+					} else {
+						errors = append(errors, fmt.Sprintf("%s: %v", item.Name, err))
 					}
 				}
 			}
 		}
-		if installedCount > 0 {
-			m.message = fmt.Sprintf("Installed %d package(s)", installedCount)
-		}
-		return nil
+		return installDoneMsg{count: installedCount, errors: errors}
 	}
 }
 
 // renderList renders the left pane with package list
 func (m Model) renderList(width, height int) string {
-	var b strings.Builder
+	var lines []string
 
 	items := m.items[m.activeTab]
 	if len(items) == 0 {
-		b.WriteString(helpStyle.Render("No packages found"))
-		b.WriteString("\n")
+		lines = append(lines, helpStyle.Render("No packages found"))
 	} else {
 		// Group by namespace
 		namespaces := make(map[string][]int)
@@ -448,8 +540,7 @@ func (m Model) renderList(width, height int) string {
 
 		globalIdx := 0
 		for _, ns := range nsOrder {
-			b.WriteString(namespaceStyle.Render(ns))
-			b.WriteString("\n")
+			lines = append(lines, namespaceStyle.Render(ns))
 
 			for _, idx := range namespaces[ns] {
 				item := items[idx]
@@ -488,14 +579,46 @@ func (m Model) renderList(width, height int) string {
 					line += " " + installedStyle.Render("✓")
 				}
 
-				b.WriteString(line)
-				b.WriteString("\n")
+				lines = append(lines, line)
 				globalIdx++
 			}
 		}
 	}
 
-	return b.String()
+	// Apply scroll offset
+	totalLines := len(lines)
+	startIdx := m.listOffset
+	if startIdx > totalLines {
+		startIdx = totalLines
+	}
+	endIdx := startIdx + height
+	if endIdx > totalLines {
+		endIdx = totalLines
+	}
+
+	visibleLines := lines[startIdx:endIdx]
+
+	// Add scroll indicator if needed
+	var result strings.Builder
+	if startIdx > 0 {
+		result.WriteString(helpStyle.Render("  ↑ more above"))
+		result.WriteString("\n")
+		if len(visibleLines) > 1 {
+			visibleLines = visibleLines[1:]
+		}
+	}
+
+	for _, line := range visibleLines {
+		result.WriteString(line)
+		result.WriteString("\n")
+	}
+
+	if endIdx < totalLines {
+		result.WriteString(helpStyle.Render("  ↓ more below"))
+		result.WriteString("\n")
+	}
+
+	return result.String()
 }
 
 // renderPreview renders the right pane with preview content
