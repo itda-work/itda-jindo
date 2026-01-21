@@ -88,9 +88,19 @@ func runHooksRevert(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
+		// Get current hook to find active version
+		currentHook, _ := store.Get(hookName)
+
 		fmt.Printf("Available versions for hook: %s\n\n", hookName)
 		for _, v := range versions {
-			fmt.Printf("  %s\n", hook.FormatVersionName(&v))
+			marker := "  "
+			// Check if this version matches current hook
+			if snapshot, _, err := historyMgr.GetVersion(v.Number); err == nil && currentHook != nil {
+				if snapshot.Matcher == currentHook.Matcher && equalStringSlices(snapshot.Commands, currentHook.Commands) {
+					marker = "* "
+				}
+			}
+			fmt.Printf("%s%s\n", marker, hook.FormatVersionName(&v))
 		}
 		fmt.Printf("\nUsage: jd hooks revert %s <version>\n", hookName)
 		return nil

@@ -91,9 +91,17 @@ func runAgentsRevert(cmd *cobra.Command, args []string) error {
 			return nil
 		}
 
+		// Get current content to find active version
+		currentContent, _ := store.GetContent(agentID)
+
 		fmt.Printf("Available versions for agent: %s\n\n", agentID)
 		for _, v := range versions {
-			fmt.Printf("  %s\n", agent.FormatVersionName(&v))
+			marker := "  "
+			// Check if this version matches current content
+			if vContent, _, err := historyMgr.GetVersion(v.Number); err == nil && vContent == currentContent {
+				marker = "* "
+			}
+			fmt.Printf("%s%s\n", marker, agent.FormatVersionName(&v))
 		}
 		fmt.Printf("\nUsage: jd agents revert %s <version>\n", agentID)
 		return nil
