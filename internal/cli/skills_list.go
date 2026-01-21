@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/itda-work/jindo/internal/skill"
@@ -89,13 +90,15 @@ func printSkillsJSON(skills []*skill.Skill) error {
 
 func printSkillsTable(skills []*skill.Skill) {
 	// Calculate column widths
-	nameWidth := len("NAME")
+	idWidth := len("ID")
 	descWidth := len("DESCRIPTION")
 	toolsWidth := len("ALLOWED-TOOLS")
 
 	for _, s := range skills {
-		if len(s.Name) > nameWidth {
-			nameWidth = len(s.Name)
+		// Use directory name as skill ID (used in commands)
+		skillID := filepath.Base(filepath.Dir(s.Path))
+		if len(skillID) > idWidth {
+			idWidth = len(skillID)
 		}
 		// Truncate description for display
 		desc := s.Description
@@ -112,8 +115,8 @@ func printSkillsTable(skills []*skill.Skill) {
 	}
 
 	// Cap widths
-	if nameWidth > 25 {
-		nameWidth = 25
+	if idWidth > 30 {
+		idWidth = 30
 	}
 	if descWidth > 50 {
 		descWidth = 50
@@ -124,19 +127,20 @@ func printSkillsTable(skills []*skill.Skill) {
 
 	// Print header
 	fmt.Printf("%-*s  %-*s  %-*s\n",
-		nameWidth, "NAME",
+		idWidth, "ID",
 		descWidth, "DESCRIPTION",
 		toolsWidth, "ALLOWED-TOOLS")
 	fmt.Printf("%s  %s  %s\n",
-		strings.Repeat("-", nameWidth),
+		strings.Repeat("-", idWidth),
 		strings.Repeat("-", descWidth),
 		strings.Repeat("-", toolsWidth))
 
 	// Print rows
 	for _, s := range skills {
-		name := s.Name
-		if len(name) > nameWidth {
-			name = name[:nameWidth-3] + "..."
+		// Use directory name as skill ID
+		skillID := filepath.Base(filepath.Dir(s.Path))
+		if len(skillID) > idWidth {
+			skillID = skillID[:idWidth-3] + "..."
 		}
 
 		desc := s.Description
@@ -150,7 +154,7 @@ func printSkillsTable(skills []*skill.Skill) {
 		}
 
 		fmt.Printf("%-*s  %-*s  %-*s\n",
-			nameWidth, name,
+			idWidth, skillID,
 			descWidth, desc,
 			toolsWidth, tools)
 	}
