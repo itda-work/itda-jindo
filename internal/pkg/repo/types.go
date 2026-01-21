@@ -9,6 +9,7 @@ type RepoConfig struct {
 	Owner         string    `json:"owner"`
 	Repo          string    `json:"repo"`
 	DefaultBranch string    `json:"default_branch"`
+	Description   string    `json:"description,omitempty"`
 	AddedAt       time.Time `json:"added_at"`
 }
 

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -156,6 +157,31 @@ func GenerateNamespace(owner, repo string) string {
 	return strings.ToLower(ownerPart + "-" + repoPart)
 }
 
+// fetchGitHubDescription fetches the repository description from GitHub API.
+func fetchGitHubDescription(owner, repo string) string {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s", owner, repo)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return ""
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode != http.StatusOK {
+		return ""
+	}
+
+	var result struct {
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return ""
+	}
+
+	return result.Description
+}
+
 // Add adds a new repository by cloning it locally.
 func (s *Store) Add(url, namespace string) (*RepoConfig, error) {
 	// Ensure git is installed
@@ -210,12 +236,16 @@ func (s *Store) Add(url, namespace string) (*RepoConfig, error) {
 		defaultBranch = "main" // fallback
 	}
 
+	// Fetch description from GitHub API
+	description := fetchGitHubDescription(owner, repo)
+
 	config := RepoConfig{
 		Namespace:     namespace,
 		URL:           fmt.Sprintf("https://github.com/%s/%s", owner, repo),
 		Owner:         owner,
 		Repo:          repo,
 		DefaultBranch: defaultBranch,
+		Description:   description,
 		AddedAt:       time.Now().UTC(),
 	}
 
@@ -302,6 +332,29 @@ func (s *Store) NamespaceExists(namespace string) (bool, error) {
 	return false, nil
 }
 
+// refreshDescription updates the description for a repository if missing.
+func (s *Store) refreshDescription(namespace string) error {
+	repos, err := s.load()
+	if err != nil {
+		return err
+	}
+
+	for i, r := range repos.Repos {
+		if r.Namespace == namespace {
+			if r.Description == "" {
+				desc := fetchGitHubDescription(r.Owner, r.Repo)
+				if desc != "" {
+					repos.Repos[i].Description = desc
+					return s.save(repos)
+				}
+			}
+			return nil
+		}
+	}
+
+	return ErrRepoNotFound
+}
+
 // Update pulls the latest changes for a repository.
 func (s *Store) Update(namespace string) error {
 	if err := git.EnsureInstalled(); err != nil {
@@ -317,7 +370,12 @@ func (s *Store) Update(namespace string) error {
 		return ErrRepoNotFound
 	}
 
-	return git.Pull(localPath)
+	if err := git.Pull(localPath); err != nil {
+		return err
+	}
+
+	// Update description if missing
+	return s.refreshDescription(namespace)
 }
 
 // UpdateAll pulls the latest changes for all repositories.
@@ -340,6 +398,8 @@ func (s *Store) UpdateAll() error {
 		if err := git.PullQuiet(localPath); err != nil {
 			fmt.Printf("  Warning: failed to update %s: %v\n", r.Namespace, err)
 		}
+		// Refresh description if missing
+		_ = s.refreshDescription(r.Namespace)
 	}
 
 	return nil

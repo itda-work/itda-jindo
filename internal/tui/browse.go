@@ -67,16 +67,17 @@ type PackageItem struct {
 
 // Model represents the TUI state
 type Model struct {
-	tabs      []Tab
-	activeTab Tab
-	items     map[Tab][]PackageItem
-	cursor    int
-	width     int
-	height    int
-	manager   *pkgmgr.Manager
-	message   string
-	quitting  bool
-	preview   string // Cached preview content
+	tabs            []Tab
+	activeTab       Tab
+	items           map[Tab][]PackageItem
+	cursor          int
+	width           int
+	height          int
+	manager         *pkgmgr.Manager
+	message         string
+	quitting        bool
+	preview         string // Cached preview content
+	namespaceFilter string // Filter by namespace (empty = all)
 }
 
 // Styles
@@ -213,6 +214,11 @@ func (m *Model) LoadPackages() error {
 
 	// Load packages from each repository
 	for _, r := range repos {
+		// Apply namespace filter
+		if m.namespaceFilter != "" && r.Namespace != m.namespaceFilter {
+			continue
+		}
+
 		items, err := repoStore.Browse(r.Namespace, "")
 		if err != nil {
 			continue
@@ -614,8 +620,9 @@ func (m Model) View() string {
 }
 
 // Run starts the TUI
-func Run(manager *pkgmgr.Manager) error {
+func Run(manager *pkgmgr.Manager, namespace string) error {
 	m := NewModel(manager)
+	m.namespaceFilter = namespace
 	if err := m.LoadPackages(); err != nil {
 		return err
 	}

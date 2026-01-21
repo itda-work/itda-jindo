@@ -3,7 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
+	"os"
 
 	"github.com/itda-work/jindo/internal/pkg/pkgmgr"
 	"github.com/itda-work/jindo/internal/pkg/repo"
@@ -23,16 +23,19 @@ var pkgBrowseCmd = &cobra.Command{
 	Long: `Browse available packages (skills, commands, agents, hooks) in registered repositories.
 
 Without arguments, opens an interactive TUI to browse all registered repositories.
-With a namespace argument, lists packages in that specific repository.
+With a namespace argument, opens TUI filtered to that specific repository.
 
 Use --type to filter by package type.
+Use --json for machine-readable output.
 
 Examples:
   jd pkg browse                     # Interactive TUI
-  jd pkg browse affa-ever           # List packages in affa-ever
-  jd pkg browse affa-ever --type skills`,
-	Args: cobra.MaximumNArgs(1),
-	RunE: runPkgBrowse,
+  jd pkg browse affa-ever           # TUI filtered to affa-ever
+  jd pkg browse --json              # JSON output of all packages
+  jd pkg browse affa-ever --json    # JSON output of affa-ever packages`,
+	Args:              cobra.MaximumNArgs(1),
+	RunE:              runPkgBrowse,
+	ValidArgsFunction: pkgBrowseCompletion,
 }
 
 func init() {
@@ -43,13 +46,32 @@ func init() {
 
 func runPkgBrowse(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
-	// If no namespace provided, launch TUI
-	if len(args) == 0 {
-		manager := pkgmgr.NewManager("~/.itda-jindo")
-		return tui.Run(manager)
+
+	namespace := ""
+	if len(args) > 0 {
+		namespace = args[0]
 	}
 
-	namespace := args[0]
+	// If JSON output is requested, use CLI mode
+	if pkgBrowseJSON {
+		return runPkgBrowseCLI(namespace)
+	}
+
+	// Launch TUI (with optional namespace filter)
+	manager := pkgmgr.NewManager("~/.itda-jindo")
+
+	// Validate namespace exists if provided
+	if namespace != "" {
+		store := repo.NewStore("~/.itda-jindo")
+		if _, err := store.Get(namespace); err != nil {
+			return fmt.Errorf("repository '%s' not found", namespace)
+		}
+	}
+
+	return tui.Run(manager, namespace)
+}
+
+func runPkgBrowseCLI(namespace string) error {
 	store := repo.NewStore("~/.itda-jindo")
 
 	// Validate type filter
@@ -69,26 +91,23 @@ func runPkgBrowse(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("invalid type: %s (use: skills, commands, agents, hooks)", pkgBrowseType)
 	}
 
-	// Get repository info
-	config, err := store.Get(namespace)
-	if err != nil {
-		return fmt.Errorf("repository '%s' not found", namespace)
-	}
+	// If no namespace, browse all repositories
+	if namespace == "" {
+		repos, err := store.List()
+		if err != nil {
+			return fmt.Errorf("list repositories: %w", err)
+		}
 
-	fmt.Printf("Browsing %s (%s)...\n\n", namespace, config.URL)
+		var allItems []repo.BrowseItem
+		for _, r := range repos {
+			items, err := store.Browse(r.Namespace, typeFilter)
+			if err != nil {
+				continue
+			}
+			allItems = append(allItems, items...)
+		}
 
-	items, err := store.Browse(namespace, typeFilter)
-	if err != nil {
-		return fmt.Errorf("browse repository: %w", err)
-	}
-
-	if len(items) == 0 {
-		fmt.Println("No packages found.")
-		return nil
-	}
-
-	if pkgBrowseJSON {
-		output, err := json.MarshalIndent(items, "", "  ")
+		output, err := json.MarshalIndent(allItems, "", "  ")
 		if err != nil {
 			return err
 		}
@@ -96,101 +115,55 @@ func runPkgBrowse(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Group by type
-	skills := make([]repo.BrowseItem, 0)
-	commands := make([]repo.BrowseItem, 0)
-	agents := make([]repo.BrowseItem, 0)
-	hooks := make([]repo.BrowseItem, 0)
-
-	for _, item := range items {
-		switch item.Type {
-		case repo.TypeSkill:
-			skills = append(skills, item)
-		case repo.TypeCommand:
-			commands = append(commands, item)
-		case repo.TypeAgent:
-			agents = append(agents, item)
-		case repo.TypeHook:
-			hooks = append(hooks, item)
-		}
+	// Get repository info
+	config, err := store.Get(namespace)
+	if err != nil {
+		return fmt.Errorf("repository '%s' not found", namespace)
 	}
 
-	if len(skills) > 0 {
-		fmt.Println("Skills:")
-		printBrowseItems(skills, namespace)
-		fmt.Println()
+	fmt.Fprintf(os.Stderr, "Browsing %s (%s)...\n\n", namespace, config.URL)
+
+	items, err := store.Browse(namespace, typeFilter)
+	if err != nil {
+		return fmt.Errorf("browse repository: %w", err)
 	}
 
-	if len(commands) > 0 {
-		fmt.Println("Commands:")
-		printBrowseItems(commands, namespace)
-		fmt.Println()
+	if len(items) == 0 {
+		fmt.Println("[]")
+		return nil
 	}
 
-	if len(agents) > 0 {
-		fmt.Println("Agents:")
-		printBrowseItems(agents, namespace)
-		fmt.Println()
+	output, err := json.MarshalIndent(items, "", "  ")
+	if err != nil {
+		return err
 	}
-
-	if len(hooks) > 0 {
-		fmt.Println("Hooks:")
-		printBrowseItems(hooks, namespace)
-		fmt.Println()
-	}
-
-	fmt.Printf("Total: %d packages\n", len(items))
-	fmt.Println()
-	fmt.Println("Install with: jd pkg install <namespace>:<path>")
-	fmt.Printf("Example: jd pkg install %s:%s\n", namespace, items[0].Path)
+	fmt.Println(string(output))
 
 	return nil
 }
 
-func printBrowseItems(items []repo.BrowseItem, namespace string) {
-	// Calculate column widths
-	nameWidth := len("NAME")
-	pathWidth := len("PATH")
-
-	for _, item := range items {
-		if len(item.Name) > nameWidth {
-			nameWidth = len(item.Name)
-		}
-		if len(item.Path) > pathWidth {
-			pathWidth = len(item.Path)
-		}
+// pkgBrowseCompletion provides tab completion for repository namespaces
+func pkgBrowseCompletion(_ *cobra.Command, args []string, _ string) ([]string, cobra.ShellCompDirective) {
+	// Only complete first argument
+	if len(args) > 0 {
+		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	// Cap widths
-	if nameWidth > 30 {
-		nameWidth = 30
-	}
-	if pathWidth > 50 {
-		pathWidth = 50
+	store := repo.NewStore("~/.itda-jindo")
+	repos, err := store.List()
+	if err != nil {
+		return nil, cobra.ShellCompDirectiveNoFileComp
 	}
 
-	// Print header
-	fmt.Printf("  %-*s  %-*s\n",
-		nameWidth, "NAME",
-		pathWidth, "PATH")
-	fmt.Printf("  %s  %s\n",
-		strings.Repeat("-", nameWidth),
-		strings.Repeat("-", pathWidth))
-
-	// Print rows
-	for _, item := range items {
-		name := item.Name
-		if len(name) > nameWidth {
-			name = name[:nameWidth-3] + "..."
+	var completions []string
+	for _, r := range repos {
+		// Format: "namespace\tdescription" for shell completion with description
+		desc := r.Description
+		if desc == "" {
+			desc = r.URL // fallback to URL if no description
 		}
-
-		path := item.Path
-		if len(path) > pathWidth {
-			path = path[:pathWidth-3] + "..."
-		}
-
-		fmt.Printf("  %-*s  %-*s\n",
-			nameWidth, name,
-			pathWidth, path)
+		completions = append(completions, fmt.Sprintf("%s\t%s", r.Namespace, desc))
 	}
+
+	return completions, cobra.ShellCompDirectiveNoFileComp
 }
