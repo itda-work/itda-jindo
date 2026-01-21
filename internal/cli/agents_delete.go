@@ -10,16 +10,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var agentsDeleteForce bool
+var (
+	agentsDeleteForce  bool
+	agentsDeleteGlobal bool
+	agentsDeleteLocal  bool
+)
 
 var agentsDeleteCmd = &cobra.Command{
 	Use:     "delete <agent-name>",
 	Aliases: []string{"d", "rm"},
 	Short:   "Delete an agent",
-	Long: `Delete an agent from ~/.claude/agents/ directory.
+	Long: `Delete an agent from ~/.claude/agents/ (global) or .claude/agents/ (local) directory.
 
 This will delete the agent file.
-Use --force to skip the confirmation prompt.`,
+Use --force to skip the confirmation prompt.
+Use --local to delete from the current directory's .claude/agents/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runAgentsDelete,
 }
@@ -27,12 +32,21 @@ Use --force to skip the confirmation prompt.`,
 func init() {
 	agentsCmd.AddCommand(agentsDeleteCmd)
 	agentsDeleteCmd.Flags().BoolVarP(&agentsDeleteForce, "force", "f", false, "Skip confirmation prompt")
+	agentsDeleteCmd.Flags().BoolVarP(&agentsDeleteGlobal, "global", "g", false, "Delete from global ~/.claude/agents/ (default)")
+	agentsDeleteCmd.Flags().BoolVarP(&agentsDeleteLocal, "local", "l", false, "Delete from local .claude/agents/")
 }
 
 func runAgentsDelete(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := agent.NewStore("~/.claude/agents")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if agentsDeleteLocal {
+		scope = ScopeLocal
+	}
+
+	store := agent.NewStore(GetPathByScope(scope, "agents"))
 
 	// Get agent to verify it exists
 	a, err := store.Get(name)

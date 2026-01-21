@@ -10,17 +10,24 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var hooksDeleteForce bool
+var (
+	hooksDeleteForce  bool
+	hooksDeleteGlobal bool
+	hooksDeleteLocal  bool
+)
 
 var hooksDeleteCmd = &cobra.Command{
 	Use:     "delete <name>",
 	Aliases: []string{"d", "rm", "remove"},
 	Short:   "Delete a hook",
-	Long: `Delete a hook from ~/.claude/settings.json.
+	Long: `Delete a hook from ~/.claude/settings.json (global) or .claude/settings.json (local).
+
+Use --local to delete from the current directory's .claude/settings.json.
 
 Examples:
   jd hooks delete PreToolUse-Bash-0
-  jd hooks delete PreToolUse-Bash-0 -f`,
+  jd hooks delete PreToolUse-Bash-0 -f
+  jd hooks delete --local PreToolUse-Bash-0`,
 	Args: cobra.ExactArgs(1),
 	RunE: runHooksDelete,
 }
@@ -28,13 +35,21 @@ Examples:
 func init() {
 	hooksCmd.AddCommand(hooksDeleteCmd)
 	hooksDeleteCmd.Flags().BoolVarP(&hooksDeleteForce, "force", "f", false, "Skip confirmation")
+	hooksDeleteCmd.Flags().BoolVarP(&hooksDeleteGlobal, "global", "g", false, "Delete from global ~/.claude/settings.json (default)")
+	hooksDeleteCmd.Flags().BoolVarP(&hooksDeleteLocal, "local", "l", false, "Delete from local .claude/settings.json")
 }
 
 func runHooksDelete(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
 
-	store := hook.NewStore("~/.claude/settings.json")
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if hooksDeleteLocal {
+		scope = ScopeLocal
+	}
+
+	store := hook.NewStore(GetSettingsPathByScope(scope))
 	h, err := store.Get(name)
 	if err != nil {
 		return fmt.Errorf("hook not found: %s", name)

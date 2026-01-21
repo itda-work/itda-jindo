@@ -9,16 +9,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var commandsEditEditor bool
+var (
+	commandsEditEditor bool
+	commandsEditGlobal bool
+	commandsEditLocal  bool
+)
 
 var commandsEditCmd = &cobra.Command{
 	Use:     "edit <command-name>",
 	Aliases: []string{"e"},
 	Short:   "Edit an existing command",
-	Long: `Edit an existing command in ~/.claude/commands/ directory.
+	Long: `Edit an existing command in ~/.claude/commands/ (global) or .claude/commands/ (local) directory.
 
 By default, uses Claude CLI to interactively edit the command content.
-Use --editor to open the command file directly in your editor.`,
+Use --editor to open the command file directly in your editor.
+Use --local to edit from the current directory's .claude/commands/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runCommandsEdit,
 }
@@ -26,12 +31,21 @@ Use --editor to open the command file directly in your editor.`,
 func init() {
 	commandsCmd.AddCommand(commandsEditCmd)
 	commandsEditCmd.Flags().BoolVarP(&commandsEditEditor, "editor", "e", false, "Open in editor directly (skip AI)")
+	commandsEditCmd.Flags().BoolVarP(&commandsEditGlobal, "global", "g", false, "Edit from global ~/.claude/commands/ (default)")
+	commandsEditCmd.Flags().BoolVarP(&commandsEditLocal, "local", "l", false, "Edit from local .claude/commands/")
 }
 
 func runCommandsEdit(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := command.NewStore("~/.claude/commands")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if commandsEditLocal {
+		scope = ScopeLocal
+	}
+
+	store := command.NewStore(GetPathByScope(scope, "commands"))
 
 	// Get command to verify it exists and get its path
 	c, err := store.Get(name)

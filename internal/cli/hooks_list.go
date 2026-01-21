@@ -15,7 +15,7 @@ var hooksListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"l", "ls"},
 	Short:   "List all hooks",
-	Long:    `List all hooks from ~/.claude/settings.json.`,
+	Long:    `List all hooks from ~/.claude/settings.json and .claude/settings.json.`,
 	RunE:    runHooksList,
 }
 
@@ -24,24 +24,57 @@ func init() {
 	hooksListCmd.Flags().BoolVar(&hooksListJSON, "json", false, "Output in JSON format")
 }
 
+// hooksListOutput represents JSON output for hooks list with scope
+type hooksListOutput struct {
+	Global []*hook.Hook `json:"global"`
+	Local  []*hook.Hook `json:"local,omitempty"`
+}
+
 func runHooksList(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
-	store := hook.NewStore("~/.claude/settings.json")
-	hooks, err := store.List()
+
+	// Get global hooks
+	globalStore := hook.NewStore(GetSettingsPathByScope(ScopeGlobal))
+	globalHooks, err := globalStore.List()
 	if err != nil {
-		return fmt.Errorf("failed to list hooks: %w", err)
+		globalHooks = nil
 	}
 
-	if len(hooks) == 0 {
-		fmt.Println("No hooks found.")
-		return nil
+	// Get local hooks (if .claude/settings.json exists)
+	var localHooks []*hook.Hook
+	if localPath := GetLocalSettingsPath(); localPath != "" {
+		localStore := hook.NewStore(localPath)
+		localHooks, _ = localStore.List()
 	}
 
 	if hooksListJSON {
-		return printHooksJSON(hooks)
+		output := hooksListOutput{
+			Global: globalHooks,
+			Local:  localHooks,
+		}
+		jsonOutput, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsonOutput))
+		return nil
 	}
 
-	printHooksTable(hooks)
+	// Print global section
+	fmt.Println("=== Global (~/.claude/settings.json) ===")
+	if len(globalHooks) == 0 {
+		fmt.Println("No hooks found.")
+	} else {
+		printHooksTable(globalHooks)
+	}
+
+	// Print local section only if exists and has items
+	if len(localHooks) > 0 {
+		fmt.Println()
+		fmt.Println("=== Local (.claude/settings.json) ===")
+		printHooksTable(localHooks)
+	}
+
 	return nil
 }
 

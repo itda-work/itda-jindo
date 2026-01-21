@@ -8,27 +8,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var hooksShowJSON bool
+var (
+	hooksShowJSON   bool
+	hooksShowGlobal bool
+	hooksShowLocal  bool
+)
 
 var hooksShowCmd = &cobra.Command{
 	Use:     "show <name>",
 	Aliases: []string{"s", "get", "view"},
 	Short:   "Show hook details",
-	Long:    `Show details of a specific hook.`,
-	Args:    cobra.ExactArgs(1),
-	RunE:    runHooksShow,
+	Long: `Show details of a specific hook from ~/.claude/settings.json (global) or .claude/settings.json (local).
+
+Use --local to show from the current directory's .claude/settings.json.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runHooksShow,
 }
 
 func init() {
 	hooksCmd.AddCommand(hooksShowCmd)
 	hooksShowCmd.Flags().BoolVar(&hooksShowJSON, "json", false, "Output in JSON format")
+	hooksShowCmd.Flags().BoolVarP(&hooksShowGlobal, "global", "g", false, "Show from global ~/.claude/settings.json (default)")
+	hooksShowCmd.Flags().BoolVarP(&hooksShowLocal, "local", "l", false, "Show from local .claude/settings.json")
 }
 
 func runHooksShow(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
 
-	store := hook.NewStore("~/.claude/settings.json")
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if hooksShowLocal {
+		scope = ScopeLocal
+	}
+
+	store := hook.NewStore(GetSettingsPathByScope(scope))
 	h, err := store.Get(name)
 	if err != nil {
 		return fmt.Errorf("hook not found: %s", name)

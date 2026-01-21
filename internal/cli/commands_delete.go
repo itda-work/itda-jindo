@@ -10,16 +10,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var commandsDeleteForce bool
+var (
+	commandsDeleteForce  bool
+	commandsDeleteGlobal bool
+	commandsDeleteLocal  bool
+)
 
 var commandsDeleteCmd = &cobra.Command{
 	Use:     "delete <command-name>",
 	Aliases: []string{"d", "rm"},
 	Short:   "Delete a command",
-	Long: `Delete a command from ~/.claude/commands/ directory.
+	Long: `Delete a command from ~/.claude/commands/ (global) or .claude/commands/ (local) directory.
 
 This will delete the command file.
-Use --force to skip the confirmation prompt.`,
+Use --force to skip the confirmation prompt.
+Use --local to delete from the current directory's .claude/commands/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runCommandsDelete,
 }
@@ -27,12 +32,21 @@ Use --force to skip the confirmation prompt.`,
 func init() {
 	commandsCmd.AddCommand(commandsDeleteCmd)
 	commandsDeleteCmd.Flags().BoolVarP(&commandsDeleteForce, "force", "f", false, "Skip confirmation prompt")
+	commandsDeleteCmd.Flags().BoolVarP(&commandsDeleteGlobal, "global", "g", false, "Delete from global ~/.claude/commands/ (default)")
+	commandsDeleteCmd.Flags().BoolVarP(&commandsDeleteLocal, "local", "l", false, "Delete from local .claude/commands/")
 }
 
 func runCommandsDelete(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := command.NewStore("~/.claude/commands")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if commandsDeleteLocal {
+		scope = ScopeLocal
+	}
+
+	store := command.NewStore(GetPathByScope(scope, "commands"))
 
 	// Get command to verify it exists
 	c, err := store.Get(name)

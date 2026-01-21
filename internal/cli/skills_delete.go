@@ -11,16 +11,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var skillsDeleteForce bool
+var (
+	skillsDeleteForce  bool
+	skillsDeleteGlobal bool
+	skillsDeleteLocal  bool
+)
 
 var skillsDeleteCmd = &cobra.Command{
 	Use:     "delete <skill-name>",
 	Aliases: []string{"d", "rm"},
 	Short:   "Delete a skill",
-	Long: `Delete a skill from ~/.claude/skills/ directory.
+	Long: `Delete a skill from ~/.claude/skills/ (global) or .claude/skills/ (local) directory.
 
 This will delete the entire skill folder including all files.
-Use --force to skip the confirmation prompt.`,
+Use --force to skip the confirmation prompt.
+Use --local to delete from the current directory's .claude/skills/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runSkillsDelete,
 }
@@ -28,12 +33,21 @@ Use --force to skip the confirmation prompt.`,
 func init() {
 	skillsCmd.AddCommand(skillsDeleteCmd)
 	skillsDeleteCmd.Flags().BoolVarP(&skillsDeleteForce, "force", "f", false, "Skip confirmation prompt")
+	skillsDeleteCmd.Flags().BoolVarP(&skillsDeleteGlobal, "global", "g", false, "Delete from global ~/.claude/skills/ (default)")
+	skillsDeleteCmd.Flags().BoolVarP(&skillsDeleteLocal, "local", "l", false, "Delete from local .claude/skills/")
 }
 
 func runSkillsDelete(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := skill.NewStore("~/.claude/skills")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if skillsDeleteLocal {
+		scope = ScopeLocal
+	}
+
+	store := skill.NewStore(GetPathByScope(scope, "skills"))
 
 	// Get skill to verify it exists
 	s, err := store.Get(name)

@@ -9,16 +9,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var skillsEditEditor bool
+var (
+	skillsEditEditor bool
+	skillsEditGlobal bool
+	skillsEditLocal  bool
+)
 
 var skillsEditCmd = &cobra.Command{
 	Use:     "edit <skill-name>",
 	Aliases: []string{"e"},
 	Short:   "Edit an existing skill",
-	Long: `Edit an existing skill in ~/.claude/skills/ directory.
+	Long: `Edit an existing skill in ~/.claude/skills/ (global) or .claude/skills/ (local) directory.
 
 By default, uses Claude CLI to interactively edit the skill content.
-Use --editor to open the skill file directly in your editor.`,
+Use --editor to open the skill file directly in your editor.
+Use --local to edit from the current directory's .claude/skills/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runSkillsEdit,
 }
@@ -26,12 +31,21 @@ Use --editor to open the skill file directly in your editor.`,
 func init() {
 	skillsCmd.AddCommand(skillsEditCmd)
 	skillsEditCmd.Flags().BoolVarP(&skillsEditEditor, "editor", "e", false, "Open in editor directly (skip AI)")
+	skillsEditCmd.Flags().BoolVarP(&skillsEditGlobal, "global", "g", false, "Edit from global ~/.claude/skills/ (default)")
+	skillsEditCmd.Flags().BoolVarP(&skillsEditLocal, "local", "l", false, "Edit from local .claude/skills/")
 }
 
 func runSkillsEdit(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := skill.NewStore("~/.claude/skills")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if skillsEditLocal {
+		scope = ScopeLocal
+	}
+
+	store := skill.NewStore(GetPathByScope(scope, "skills"))
 
 	// Get skill to verify it exists and get its path
 	s, err := store.Get(name)

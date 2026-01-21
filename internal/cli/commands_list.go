@@ -15,7 +15,7 @@ var commandsListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"l", "ls"},
 	Short:   "List all commands",
-	Long:    `List all commands from ~/.claude/commands/ directory.`,
+	Long:    `List all commands from ~/.claude/commands/ and .claude/commands/ directories.`,
 	RunE:    runCommandsList,
 }
 
@@ -24,24 +24,57 @@ func init() {
 	commandsListCmd.Flags().BoolVar(&commandsListJSON, "json", false, "Output in JSON format")
 }
 
+// commandsListOutput represents JSON output for commands list with scope
+type commandsListOutput struct {
+	Global []*command.Command `json:"global"`
+	Local  []*command.Command `json:"local,omitempty"`
+}
+
 func runCommandsList(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
-	store := command.NewStore("~/.claude/commands")
-	commands, err := store.List()
+
+	// Get global commands
+	globalStore := command.NewStore(GetGlobalPath("commands"))
+	globalCommands, err := globalStore.List()
 	if err != nil {
-		return fmt.Errorf("failed to list commands: %w", err)
+		globalCommands = nil
 	}
 
-	if len(commands) == 0 {
-		fmt.Println("No commands found.")
-		return nil
+	// Get local commands (if .claude/commands exists)
+	var localCommands []*command.Command
+	if localPath := GetLocalPath("commands"); localPath != "" {
+		localStore := command.NewStore(localPath)
+		localCommands, _ = localStore.List()
 	}
 
 	if commandsListJSON {
-		return printCommandsJSON(commands)
+		output := commandsListOutput{
+			Global: globalCommands,
+			Local:  localCommands,
+		}
+		jsonOutput, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsonOutput))
+		return nil
 	}
 
-	printCommandsTable(commands)
+	// Print global section
+	fmt.Println("=== Global (~/.claude/commands/) ===")
+	if len(globalCommands) == 0 {
+		fmt.Println("No commands found.")
+	} else {
+		printCommandsTable(globalCommands)
+	}
+
+	// Print local section only if exists and has items
+	if len(localCommands) > 0 {
+		fmt.Println()
+		fmt.Println("=== Local (.claude/commands/) ===")
+		printCommandsTable(localCommands)
+	}
+
 	return nil
 }
 

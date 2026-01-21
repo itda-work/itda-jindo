@@ -16,16 +16,19 @@ var (
 	hooksNewMatcher      string
 	hooksNewCommand      string
 	hooksNewCreateScript bool
+	hooksNewGlobal       bool
+	hooksNewLocal        bool
 )
 
 var hooksNewCmd = &cobra.Command{
 	Use:     "new",
 	Aliases: []string{"n", "add", "create"},
 	Short:   "Create a new hook",
-	Long: `Create a new hook in ~/.claude/settings.json.
+	Long: `Create a new hook in ~/.claude/settings.json (global) or .claude/settings.json (local).
 
 This command runs in wizard mode if no flags are provided.
 You can also specify all options via flags for non-interactive use.
+Use --local to create in the current directory's .claude/settings.json.
 
 Event types (with aliases):
   - PreToolUse (pre): Runs before a tool is executed
@@ -43,7 +46,8 @@ Examples:
   jd hooks new
   jd hooks new -e pre -m "Bash" -c "echo 'Running bash'"
   jd hooks new -e post -m "Bash|Write" -c "~/.claude/hooks/log.sh"
-  jd hooks new -e post -m "Bash" --script`,
+  jd hooks new -e post -m "Bash" --script
+  jd hooks new --local -e pre -m "Bash" -c "echo 'local hook'"`,
 	RunE:              runHooksNew,
 	ValidArgsFunction: hooksNewCompletion,
 }
@@ -54,6 +58,8 @@ func init() {
 	hooksNewCmd.Flags().StringVarP(&hooksNewMatcher, "matcher", "m", "", "Tool matcher pattern (e.g., Bash, \"Bash|Write\", *)")
 	hooksNewCmd.Flags().StringVarP(&hooksNewCommand, "command", "c", "", "Command to execute")
 	hooksNewCmd.Flags().BoolVar(&hooksNewCreateScript, "script", false, "Create a script file in ~/.claude/hooks/")
+	hooksNewCmd.Flags().BoolVarP(&hooksNewGlobal, "global", "g", false, "Create in global ~/.claude/settings.json (default)")
+	hooksNewCmd.Flags().BoolVarP(&hooksNewLocal, "local", "l", false, "Create in local .claude/settings.json")
 
 	// Register completion for --event flag
 	_ = hooksNewCmd.RegisterFlagCompletionFunc("event", func(_ *cobra.Command, _ []string, _ string) ([]string, cobra.ShellCompDirective) {
@@ -189,8 +195,14 @@ echo "Hook triggered: %s for $TOOL_NAME"
 		command = scriptPath
 	}
 
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if hooksNewLocal {
+		scope = ScopeLocal
+	}
+
 	// Add hook to settings.json
-	store := hook.NewStore("~/.claude/settings.json")
+	store := hook.NewStore(GetSettingsPathByScope(scope))
 	newHook, err := store.Add(validEventType, matcher, []string{command})
 	if err != nil {
 		return fmt.Errorf("failed to add hook: %w", err)

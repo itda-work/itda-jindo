@@ -8,26 +8,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var commandsShowBrief bool
+var (
+	commandsShowBrief  bool
+	commandsShowGlobal bool
+	commandsShowLocal  bool
+)
 
 var commandsShowCmd = &cobra.Command{
 	Use:     "show <command-name>",
 	Aliases: []string{"s"},
 	Short:   "Show command details",
-	Long:  `Show the full content of a specific command from ~/.claude/commands/ directory.`,
-	Args:  cobra.ExactArgs(1),
-	RunE:  runCommandsShow,
+	Long: `Show the full content of a specific command from ~/.claude/commands/ (global) or .claude/commands/ (local) directory.
+
+Use --local to show from the current directory's .claude/commands/.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runCommandsShow,
 }
 
 func init() {
 	commandsCmd.AddCommand(commandsShowCmd)
 	commandsShowCmd.Flags().BoolVar(&commandsShowBrief, "brief", false, "Show only metadata (name, description)")
+	commandsShowCmd.Flags().BoolVarP(&commandsShowGlobal, "global", "g", false, "Show from global ~/.claude/commands/ (default)")
+	commandsShowCmd.Flags().BoolVarP(&commandsShowLocal, "local", "l", false, "Show from local .claude/commands/")
 }
 
 func runCommandsShow(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := command.NewStore("~/.claude/commands")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if commandsShowLocal {
+		scope = ScopeLocal
+	}
+
+	store := command.NewStore(GetPathByScope(scope, "commands"))
 
 	if commandsShowBrief {
 		return showCommandBrief(store, name)

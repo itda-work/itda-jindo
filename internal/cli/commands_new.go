@@ -11,19 +11,22 @@ import (
 )
 
 var (
-	commandsNewEdit bool
-	commandsNewNoAI bool
-	commandsNewDesc string
+	commandsNewEdit   bool
+	commandsNewNoAI   bool
+	commandsNewDesc   string
+	commandsNewGlobal bool
+	commandsNewLocal  bool
 )
 
 var commandsNewCmd = &cobra.Command{
 	Use:     "new <command-name>",
 	Aliases: []string{"n"},
 	Short:   "Create a new command",
-	Long: `Create a new command in ~/.claude/commands/ directory.
+	Long: `Create a new command in ~/.claude/commands/ (global) or .claude/commands/ (local) directory.
 
 By default, uses Claude CLI to interactively generate the command content.
 Use --no-ai to create a minimal template without AI assistance.
+Use --local to create in the current directory's .claude/commands/.
 
 Command names can include subdirectory prefix (e.g., "game:asset" creates game/asset.md).`,
 	Args: cobra.ExactArgs(1),
@@ -35,22 +38,40 @@ func init() {
 	commandsNewCmd.Flags().BoolVarP(&commandsNewEdit, "edit", "e", false, "Open editor after creation")
 	commandsNewCmd.Flags().BoolVar(&commandsNewNoAI, "no-ai", false, "Create minimal template without AI")
 	commandsNewCmd.Flags().StringVarP(&commandsNewDesc, "description", "d", "", "Command description (for --no-ai mode)")
+	commandsNewCmd.Flags().BoolVarP(&commandsNewGlobal, "global", "g", false, "Create in global ~/.claude/commands/ (default)")
+	commandsNewCmd.Flags().BoolVarP(&commandsNewLocal, "local", "l", false, "Create in local .claude/commands/")
 }
 
 func runCommandsNew(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
 
-	// Get commands directory
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if commandsNewLocal {
+		scope = ScopeLocal
+	}
+
+	// Get commands directory based on scope
+	var baseDir string
+	if scope == ScopeLocal {
+		localPath, err := GetLocalPathForWrite("commands")
+		if err != nil {
+			return fmt.Errorf("failed to create local commands directory: %w", err)
+		}
+		baseDir = localPath
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		baseDir = filepath.Join(home, ".claude", "commands")
 	}
 
 	// Convert name:subname format to path
 	parts := strings.Split(name, ":")
 	pathParts := append(parts[:len(parts)-1], parts[len(parts)-1]+".md")
-	cmdFile := filepath.Join(home, ".claude", "commands", filepath.Join(pathParts...))
+	cmdFile := filepath.Join(baseDir, filepath.Join(pathParts...))
 	cmdDir := filepath.Dir(cmdFile)
 
 	// Check if command already exists

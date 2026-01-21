@@ -10,20 +10,23 @@ import (
 )
 
 var (
-	agentsNewEdit  bool
-	agentsNewNoAI  bool
-	agentsNewDesc  string
-	agentsNewModel string
+	agentsNewEdit   bool
+	agentsNewNoAI   bool
+	agentsNewDesc   string
+	agentsNewModel  string
+	agentsNewGlobal bool
+	agentsNewLocal  bool
 )
 
 var agentsNewCmd = &cobra.Command{
 	Use:     "new <agent-name>",
 	Aliases: []string{"n"},
 	Short:   "Create a new agent",
-	Long: `Create a new agent in ~/.claude/agents/ directory.
+	Long: `Create a new agent in ~/.claude/agents/ (global) or .claude/agents/ (local) directory.
 
 By default, uses Claude CLI to interactively generate the agent content.
-Use --no-ai to create a minimal template without AI assistance.`,
+Use --no-ai to create a minimal template without AI assistance.
+Use --local to create in the current directory's .claude/agents/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runAgentsNew,
 }
@@ -34,19 +37,35 @@ func init() {
 	agentsNewCmd.Flags().BoolVar(&agentsNewNoAI, "no-ai", false, "Create minimal template without AI")
 	agentsNewCmd.Flags().StringVarP(&agentsNewDesc, "description", "d", "", "Agent description (for --no-ai mode)")
 	agentsNewCmd.Flags().StringVarP(&agentsNewModel, "model", "m", "", "Model to use (for --no-ai mode)")
+	agentsNewCmd.Flags().BoolVarP(&agentsNewGlobal, "global", "g", false, "Create in global ~/.claude/agents/ (default)")
+	agentsNewCmd.Flags().BoolVarP(&agentsNewLocal, "local", "l", false, "Create in local .claude/agents/")
 }
 
 func runAgentsNew(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
 
-	// Get agents directory
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if agentsNewLocal {
+		scope = ScopeLocal
 	}
 
-	agentsDir := filepath.Join(home, ".claude", "agents")
+	// Get agents directory based on scope
+	var agentsDir string
+	if scope == ScopeLocal {
+		localPath, err := GetLocalPathForWrite("agents")
+		if err != nil {
+			return fmt.Errorf("failed to create local agents directory: %w", err)
+		}
+		agentsDir = localPath
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		agentsDir = filepath.Join(home, ".claude", "agents")
+	}
 	agentFile := filepath.Join(agentsDir, name+".md")
 
 	// Check if agent already exists

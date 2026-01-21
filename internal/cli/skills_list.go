@@ -15,7 +15,7 @@ var skillsListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"l", "ls"},
 	Short:   "List all skills",
-	Long:    `List all skills from ~/.claude/skills/ directory.`,
+	Long:    `List all skills from ~/.claude/skills/ and .claude/skills/ directories.`,
 	RunE:    runSkillsList,
 }
 
@@ -24,24 +24,57 @@ func init() {
 	skillsListCmd.Flags().BoolVar(&skillsListJSON, "json", false, "Output in JSON format")
 }
 
+// skillsListOutput represents JSON output for skills list with scope
+type skillsListOutput struct {
+	Global []*skill.Skill `json:"global"`
+	Local  []*skill.Skill `json:"local,omitempty"`
+}
+
 func runSkillsList(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
-	store := skill.NewStore("~/.claude/skills")
-	skills, err := store.List()
+
+	// Get global skills
+	globalStore := skill.NewStore(GetGlobalPath("skills"))
+	globalSkills, err := globalStore.List()
 	if err != nil {
-		return fmt.Errorf("failed to list skills: %w", err)
+		globalSkills = nil
 	}
 
-	if len(skills) == 0 {
-		fmt.Println("No skills found.")
-		return nil
+	// Get local skills (if .claude/skills exists)
+	var localSkills []*skill.Skill
+	if localPath := GetLocalPath("skills"); localPath != "" {
+		localStore := skill.NewStore(localPath)
+		localSkills, _ = localStore.List()
 	}
 
 	if skillsListJSON {
-		return printSkillsJSON(skills)
+		output := skillsListOutput{
+			Global: globalSkills,
+			Local:  localSkills,
+		}
+		jsonOutput, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsonOutput))
+		return nil
 	}
 
-	printSkillsTable(skills)
+	// Print global section
+	fmt.Println("=== Global (~/.claude/skills/) ===")
+	if len(globalSkills) == 0 {
+		fmt.Println("No skills found.")
+	} else {
+		printSkillsTable(globalSkills)
+	}
+
+	// Print local section only if exists and has items
+	if len(localSkills) > 0 {
+		fmt.Println()
+		fmt.Println("=== Local (.claude/skills/) ===")
+		printSkillsTable(localSkills)
+	}
+
 	return nil
 }
 

@@ -9,26 +9,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var skillsShowBrief bool
+var (
+	skillsShowBrief  bool
+	skillsShowGlobal bool
+	skillsShowLocal  bool
+)
 
 var skillsShowCmd = &cobra.Command{
 	Use:     "show <skill-name>",
 	Aliases: []string{"s"},
 	Short:   "Show skill details",
-	Long:  `Show the full content of a specific skill from ~/.claude/skills/ directory.`,
-	Args:  cobra.ExactArgs(1),
-	RunE:  runSkillsShow,
+	Long: `Show the full content of a specific skill from ~/.claude/skills/ (global) or .claude/skills/ (local) directory.
+
+Use --local to show from the current directory's .claude/skills/.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runSkillsShow,
 }
 
 func init() {
 	skillsCmd.AddCommand(skillsShowCmd)
 	skillsShowCmd.Flags().BoolVar(&skillsShowBrief, "brief", false, "Show only frontmatter (name, description, allowed-tools)")
+	skillsShowCmd.Flags().BoolVarP(&skillsShowGlobal, "global", "g", false, "Show from global ~/.claude/skills/ (default)")
+	skillsShowCmd.Flags().BoolVarP(&skillsShowLocal, "local", "l", false, "Show from local .claude/skills/")
 }
 
 func runSkillsShow(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := skill.NewStore("~/.claude/skills")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if skillsShowLocal {
+		scope = ScopeLocal
+	}
+
+	store := skill.NewStore(GetPathByScope(scope, "skills"))
 
 	if skillsShowBrief {
 		return showSkillBrief(store, name)

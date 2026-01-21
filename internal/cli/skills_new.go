@@ -15,16 +15,19 @@ var (
 	skillsNewNoAI   bool
 	skillsNewDesc   string
 	skillsNewTools  string
+	skillsNewGlobal bool
+	skillsNewLocal  bool
 )
 
 var skillsNewCmd = &cobra.Command{
 	Use:     "new <skill-name>",
 	Aliases: []string{"n"},
 	Short:   "Create a new skill",
-	Long: `Create a new skill in ~/.claude/skills/ directory.
+	Long: `Create a new skill in ~/.claude/skills/ (global) or .claude/skills/ (local) directory.
 
 By default, uses Claude CLI to interactively generate the skill content.
-Use --no-ai to create a minimal template without AI assistance.`,
+Use --no-ai to create a minimal template without AI assistance.
+Use --local to create in the current directory's .claude/skills/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runSkillsNew,
 }
@@ -35,19 +38,35 @@ func init() {
 	skillsNewCmd.Flags().BoolVar(&skillsNewNoAI, "no-ai", false, "Create minimal template without AI")
 	skillsNewCmd.Flags().StringVarP(&skillsNewDesc, "description", "d", "", "Skill description (for --no-ai mode)")
 	skillsNewCmd.Flags().StringVarP(&skillsNewTools, "tools", "t", "", "Allowed tools, comma-separated (for --no-ai mode)")
+	skillsNewCmd.Flags().BoolVarP(&skillsNewGlobal, "global", "g", false, "Create in global ~/.claude/skills/ (default)")
+	skillsNewCmd.Flags().BoolVarP(&skillsNewLocal, "local", "l", false, "Create in local .claude/skills/")
 }
 
 func runSkillsNew(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
 
-	// Get skills directory
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return fmt.Errorf("failed to get home directory: %w", err)
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if skillsNewLocal {
+		scope = ScopeLocal
 	}
 
-	skillDir := filepath.Join(home, ".claude", "skills", name)
+	// Get skills directory based on scope
+	var skillDir string
+	if scope == ScopeLocal {
+		localPath, err := GetLocalPathForWrite("skills")
+		if err != nil {
+			return fmt.Errorf("failed to create local skills directory: %w", err)
+		}
+		skillDir = filepath.Join(localPath, name)
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return fmt.Errorf("failed to get home directory: %w", err)
+		}
+		skillDir = filepath.Join(home, ".claude", "skills", name)
+	}
 	skillFile := filepath.Join(skillDir, "SKILL.md")
 
 	// Check if skill already exists

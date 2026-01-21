@@ -15,7 +15,7 @@ var agentsListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"l", "ls"},
 	Short:   "List all agents",
-	Long:    `List all agents from ~/.claude/agents/ directory.`,
+	Long:    `List all agents from ~/.claude/agents/ and .claude/agents/ directories.`,
 	RunE:    runAgentsList,
 }
 
@@ -24,24 +24,57 @@ func init() {
 	agentsListCmd.Flags().BoolVar(&agentsListJSON, "json", false, "Output in JSON format")
 }
 
+// agentsListOutput represents JSON output for agents list with scope
+type agentsListOutput struct {
+	Global []*agent.Agent `json:"global"`
+	Local  []*agent.Agent `json:"local,omitempty"`
+}
+
 func runAgentsList(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
-	store := agent.NewStore("~/.claude/agents")
-	agents, err := store.List()
+
+	// Get global agents
+	globalStore := agent.NewStore(GetGlobalPath("agents"))
+	globalAgents, err := globalStore.List()
 	if err != nil {
-		return fmt.Errorf("failed to list agents: %w", err)
+		globalAgents = nil
 	}
 
-	if len(agents) == 0 {
-		fmt.Println("No agents found.")
-		return nil
+	// Get local agents (if .claude/agents exists)
+	var localAgents []*agent.Agent
+	if localPath := GetLocalPath("agents"); localPath != "" {
+		localStore := agent.NewStore(localPath)
+		localAgents, _ = localStore.List()
 	}
 
 	if agentsListJSON {
-		return printAgentsJSON(agents)
+		output := agentsListOutput{
+			Global: globalAgents,
+			Local:  localAgents,
+		}
+		jsonOutput, err := json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsonOutput))
+		return nil
 	}
 
-	printAgentsTable(agents)
+	// Print global section
+	fmt.Println("=== Global (~/.claude/agents/) ===")
+	if len(globalAgents) == 0 {
+		fmt.Println("No agents found.")
+	} else {
+		printAgentsTable(globalAgents)
+	}
+
+	// Print local section only if exists and has items
+	if len(localAgents) > 0 {
+		fmt.Println()
+		fmt.Println("=== Local (.claude/agents/) ===")
+		printAgentsTable(localAgents)
+	}
+
 	return nil
 }
 

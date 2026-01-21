@@ -8,26 +8,41 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var agentsShowBrief bool
+var (
+	agentsShowBrief  bool
+	agentsShowGlobal bool
+	agentsShowLocal  bool
+)
 
 var agentsShowCmd = &cobra.Command{
 	Use:     "show <agent-name>",
 	Aliases: []string{"s"},
 	Short:   "Show agent details",
-	Long:  `Show the full content of a specific agent from ~/.claude/agents/ directory.`,
-	Args:  cobra.ExactArgs(1),
-	RunE:  runAgentsShow,
+	Long: `Show the full content of a specific agent from ~/.claude/agents/ (global) or .claude/agents/ (local) directory.
+
+Use --local to show from the current directory's .claude/agents/.`,
+	Args: cobra.ExactArgs(1),
+	RunE: runAgentsShow,
 }
 
 func init() {
 	agentsCmd.AddCommand(agentsShowCmd)
 	agentsShowCmd.Flags().BoolVar(&agentsShowBrief, "brief", false, "Show only metadata (name, description, model)")
+	agentsShowCmd.Flags().BoolVarP(&agentsShowGlobal, "global", "g", false, "Show from global ~/.claude/agents/ (default)")
+	agentsShowCmd.Flags().BoolVarP(&agentsShowLocal, "local", "l", false, "Show from local .claude/agents/")
 }
 
 func runAgentsShow(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := agent.NewStore("~/.claude/agents")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if agentsShowLocal {
+		scope = ScopeLocal
+	}
+
+	store := agent.NewStore(GetPathByScope(scope, "agents"))
 
 	if agentsShowBrief {
 		return showAgentBrief(store, name)

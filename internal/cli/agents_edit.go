@@ -9,16 +9,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var agentsEditEditor bool
+var (
+	agentsEditEditor bool
+	agentsEditGlobal bool
+	agentsEditLocal  bool
+)
 
 var agentsEditCmd = &cobra.Command{
 	Use:     "edit <agent-name>",
 	Aliases: []string{"e"},
 	Short:   "Edit an existing agent",
-	Long: `Edit an existing agent in ~/.claude/agents/ directory.
+	Long: `Edit an existing agent in ~/.claude/agents/ (global) or .claude/agents/ (local) directory.
 
 By default, uses Claude CLI to interactively edit the agent content.
-Use --editor to open the agent file directly in your editor.`,
+Use --editor to open the agent file directly in your editor.
+Use --local to edit from the current directory's .claude/agents/.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runAgentsEdit,
 }
@@ -26,12 +31,21 @@ Use --editor to open the agent file directly in your editor.`,
 func init() {
 	agentsCmd.AddCommand(agentsEditCmd)
 	agentsEditCmd.Flags().BoolVarP(&agentsEditEditor, "editor", "e", false, "Open in editor directly (skip AI)")
+	agentsEditCmd.Flags().BoolVarP(&agentsEditGlobal, "global", "g", false, "Edit from global ~/.claude/agents/ (default)")
+	agentsEditCmd.Flags().BoolVarP(&agentsEditLocal, "local", "l", false, "Edit from local .claude/agents/")
 }
 
 func runAgentsEdit(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
 	name := args[0]
-	store := agent.NewStore("~/.claude/agents")
+
+	// Determine scope (default: global)
+	scope := ScopeGlobal
+	if agentsEditLocal {
+		scope = ScopeLocal
+	}
+
+	store := agent.NewStore(GetPathByScope(scope, "agents"))
 
 	// Get agent to verify it exists and get its path
 	a, err := store.Get(name)
