@@ -1,12 +1,13 @@
 ---
 number: 27
 title: Global/Local 경로 분리 지원
-state: wip
+state: done
 labels:
   - enhancement
 assignees: []
 created_at: '2026-01-21T03:59:25Z'
-updated_at: '2026-01-21T03:59:32Z'
+updated_at: '2026-01-21T04:47:36Z'
+closed_at: '2026-01-21T04:47:36Z'
 ---
 
 ## Background
