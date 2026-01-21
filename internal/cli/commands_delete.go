@@ -38,6 +38,12 @@ func init() {
 
 func runCommandsDelete(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
+
+	// Validate mutually exclusive flags
+	if err := ValidateScopeFlags(commandsDeleteGlobal, commandsDeleteLocal); err != nil {
+		return err
+	}
+
 	name := args[0]
 
 	// Determine scope (default: global)

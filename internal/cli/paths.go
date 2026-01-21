@@ -1,9 +1,21 @@
 package cli
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 )
+
+// ErrMutuallyExclusiveFlags is returned when both --global and --local flags are specified
+var ErrMutuallyExclusiveFlags = errors.New("--global and --local flags are mutually exclusive")
+
+// ValidateScopeFlags checks that --global and --local flags are not both specified
+func ValidateScopeFlags(global, local bool) error {
+	if global && local {
+		return ErrMutuallyExclusiveFlags
+	}
+	return nil
+}
 
 const (
 	globalClaudeDir = "~/.claude"

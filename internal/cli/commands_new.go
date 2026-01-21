@@ -44,6 +44,12 @@ func init() {
 
 func runCommandsNew(cmd *cobra.Command, args []string) error {
 	cmd.SilenceUsage = true
+
+	// Validate mutually exclusive flags
+	if err := ValidateScopeFlags(commandsNewGlobal, commandsNewLocal); err != nil {
+		return err
+	}
+
 	name := args[0]
 
 	// Determine scope (default: global)

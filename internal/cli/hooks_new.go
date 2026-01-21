@@ -93,6 +93,12 @@ func hooksNewCompletion(_ *cobra.Command, _ []string, _ string) ([]string, cobra
 
 func runHooksNew(cmd *cobra.Command, _ []string) error {
 	cmd.SilenceUsage = true
+
+	// Validate mutually exclusive flags
+	if err := ValidateScopeFlags(hooksNewGlobal, hooksNewLocal); err != nil {
+		return err
+	}
+
 	reader := bufio.NewReader(os.Stdin)
 
 	// Get event type
