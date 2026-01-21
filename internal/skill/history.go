@@ -242,6 +242,38 @@ func (h *HistoryManager) DeleteVersion(versionNum int) error {
 	return h.saveManifest(manifest)
 }
 
+// DeleteVersionsAfter removes all versions after the specified version number
+func (h *HistoryManager) DeleteVersionsAfter(versionNum int) (int, error) {
+	manifest, err := h.loadManifest()
+	if err != nil {
+		return 0, err
+	}
+
+	var newVersions []Version
+	var toDelete []string
+	for _, v := range manifest.Versions {
+		if v.Number <= versionNum {
+			newVersions = append(newVersions, v)
+		} else {
+			toDelete = append(toDelete, v.Filename)
+		}
+	}
+
+	// Delete version files
+	for _, filename := range toDelete {
+		versionPath := filepath.Join(h.getHistoryDir(), filename)
+		_ = os.Remove(versionPath) // Ignore errors
+	}
+
+	// Update manifest
+	manifest.Versions = newVersions
+	if err := h.saveManifest(manifest); err != nil {
+		return 0, err
+	}
+
+	return len(toDelete), nil
+}
+
 // FormatVersionName formats a version for display
 func FormatVersionName(v *Version) string {
 	return fmt.Sprintf("v%03d (%s)", v.Number, v.Timestamp.Format("2006-01-02 15:04:05"))

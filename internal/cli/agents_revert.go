@@ -124,24 +124,21 @@ func runAgentsRevert(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get version: %w", err)
 	}
 
-	// Backup current content before reverting
-	currentContent, err := store.GetContent(agentID)
-	if err != nil {
-		return fmt.Errorf("failed to read current content: %w", err)
-	}
-
-	_, err = historyMgr.SaveVersion(currentContent)
-	if err != nil {
-		return fmt.Errorf("failed to backup current version: %w", err)
-	}
-
 	// Write the reverted content
 	if err := os.WriteFile(a.Path, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write reverted content: %w", err)
 	}
 
+	// Delete all versions after the reverted version
+	deleted, err := historyMgr.DeleteVersionsAfter(version.Number)
+	if err != nil {
+		return fmt.Errorf("failed to cleanup versions: %w", err)
+	}
+
 	fmt.Printf("✅ Reverted agent '%s' to %s\n", agentID, agent.FormatVersionName(version))
-	fmt.Println("\nCurrent content has been backed up to history.")
+	if deleted > 0 {
+		fmt.Printf("   Removed %d newer version(s)\n", deleted)
+	}
 
 	return nil
 }

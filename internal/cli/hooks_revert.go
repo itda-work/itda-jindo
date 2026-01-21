@@ -61,7 +61,7 @@ func runHooksRevert(cmd *cobra.Command, args []string) error {
 	store := hook.NewStore(settingsPath)
 
 	// Verify hook exists
-	currentHook, err := store.Get(hookName)
+	_, err := store.Get(hookName)
 	if err != nil {
 		return fmt.Errorf("hook not found: %s", hookName)
 	}
@@ -121,20 +121,22 @@ func runHooksRevert(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to get version: %w", err)
 	}
 
-	// Backup current hook before reverting
-	_, err = historyMgr.SaveVersion(currentHook)
-	if err != nil {
-		return fmt.Errorf("failed to backup current version: %w", err)
-	}
-
 	// Update the hook with the reverted configuration
 	_, err = store.Update(hookName, snapshot.Matcher, snapshot.Commands)
 	if err != nil {
 		return fmt.Errorf("failed to update hook: %w", err)
 	}
 
+	// Delete all versions after the reverted version
+	deleted, err := historyMgr.DeleteVersionsAfter(version.Number)
+	if err != nil {
+		return fmt.Errorf("failed to cleanup versions: %w", err)
+	}
+
 	fmt.Printf("✅ Reverted hook '%s' to %s\n", hookName, hook.FormatVersionName(version))
-	fmt.Println("\nCurrent configuration has been backed up to history.")
+	if deleted > 0 {
+		fmt.Printf("   Removed %d newer version(s)\n", deleted)
+	}
 
 	return nil
 }
