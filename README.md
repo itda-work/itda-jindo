@@ -22,13 +22,13 @@ A CLI tool for managing Claude Code configurations including skills, commands, a
 #### macOS / Linux
 
 ```bash
-curl -fsSL https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.sh | bash
+curl -fsSL https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.sh | bash
 ```
 
 #### Windows (PowerShell)
 
 ```powershell
-irm https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.ps1 | iex
+irm https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.ps1 | iex
 ```
 
 ### Custom Installation
@@ -37,27 +37,27 @@ irm https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.ps1 | iex
 
 ```bash
 # Install to a custom directory
-JD_INSTALL_DIR=~/bin curl -fsSL https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.sh | bash
+JD_INSTALL_DIR=~/bin curl -fsSL https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.sh | bash
 
 # Install a specific version
-VERSION=v0.1.0 curl -fsSL https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.sh | bash
+VERSION=v0.1.0 curl -fsSL https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.sh | bash
 ```
 
 #### Windows (PowerShell)
 
 ```powershell
 # Install to a custom directory
-$env:JD_INSTALL_DIR = "C:\tools"; irm https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.ps1 | iex
+$env:JD_INSTALL_DIR = "C:\tools"; irm https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.ps1 | iex
 
 # Install a specific version
-$env:VERSION = "v0.1.0"; irm https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.ps1 | iex
+$env:VERSION = "v0.1.0"; irm https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.ps1 | iex
 ```
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/itda-work/itda-jindo.git
-cd itda-jindo
+git clone https://github.com/itda-work/jindo.git
+cd jindo
 make build
 ```
 
@@ -260,8 +260,8 @@ Agent system prompt and instructions...
 
 ```bash
 # Clone the repository
-git clone https://github.com/itda-work/itda-jindo.git
-cd itda-jindo
+git clone https://github.com/itda-work/jindo.git
+cd jindo
 
 # Install pre-commit hooks
 pip install pre-commit

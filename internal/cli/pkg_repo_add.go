@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/itda-work/itda-jindo/internal/pkg/repo"
+	"github.com/itda-work/jindo/internal/pkg/repo"
 	"github.com/spf13/cobra"
 )
 

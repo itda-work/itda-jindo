@@ -3,7 +3,7 @@
 BINARY := jd
 VERSION := $(or $(TAG),$(shell git describe --tags --always --dirty 2>/dev/null || echo "dev"))
 BUILD_DATE := $(shell date -u +%Y-%m-%d)
-LDFLAGS := -ldflags "-s -w -X github.com/itda-work/itda-jindo/internal/cli.Version=$(VERSION) -X github.com/itda-work/itda-jindo/internal/cli.BuildDate=$(BUILD_DATE)"
+LDFLAGS := -ldflags "-s -w -X github.com/itda-work/jindo/internal/cli.Version=$(VERSION) -X github.com/itda-work/jindo/internal/cli.BuildDate=$(BUILD_DATE)"
 DIST := dist
 
 build:

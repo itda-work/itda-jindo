@@ -1,4 +1,4 @@
-# itda-jindo
+# jindo
 
 ## zap - Local Issue Management
 

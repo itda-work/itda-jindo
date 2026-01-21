@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultRepo    = "itda-work/itda-jindo"
+	defaultRepo    = "itda-work/jindo"
 	apiBaseURL     = "https://api.github.com"
 	defaultTimeout = 30 * time.Second
 )

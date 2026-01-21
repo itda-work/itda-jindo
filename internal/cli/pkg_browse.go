@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/itda-work/itda-jindo/internal/pkg/pkgmgr"
-	"github.com/itda-work/itda-jindo/internal/pkg/repo"
-	"github.com/itda-work/itda-jindo/internal/tui"
+	"github.com/itda-work/jindo/internal/pkg/pkgmgr"
+	"github.com/itda-work/jindo/internal/pkg/repo"
+	"github.com/itda-work/jindo/internal/tui"
 	"github.com/spf13/cobra"
 )
 

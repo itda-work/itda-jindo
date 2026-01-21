@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/itda-work/itda-jindo/internal/agent"
-	"github.com/itda-work/itda-jindo/internal/command"
-	"github.com/itda-work/itda-jindo/internal/skill"
+	"github.com/itda-work/jindo/internal/agent"
+	"github.com/itda-work/jindo/internal/command"
+	"github.com/itda-work/jindo/internal/skill"
 	"github.com/spf13/cobra"
 )
 

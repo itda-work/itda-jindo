@@ -9,13 +9,13 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/itda-work/itda-jindo/internal/updater"
+	"github.com/itda-work/jindo/internal/updater"
 	"github.com/spf13/cobra"
 )
 
 const (
-	installScriptUnix    = "https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.sh"
-	installScriptWindows = "https://cdn.jsdelivr.net/gh/itda-work/itda-jindo@main/install.ps1"
+	installScriptUnix    = "https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.sh"
+	installScriptWindows = "https://cdn.jsdelivr.net/gh/itda-work/jindo@main/install.ps1"
 )
 
 var (
@@ -147,7 +147,7 @@ func handleDevBuild() error {
 	fmt.Println("You're running a development build. Cannot determine update status.")
 	fmt.Println()
 	fmt.Println("If you installed via 'go install', use:")
-	fmt.Println("  go install github.com/itda-work/itda-jindo/cmd/jd@latest")
+	fmt.Println("  go install github.com/itda-work/jindo/cmd/jd@latest")
 	fmt.Println()
 	fmt.Println("Or use the install script:")
 	fmt.Println("  jd update --script")
@@ -187,7 +187,7 @@ func handleUpdateError(err error) error {
 	case errors.As(err, &noAssetErr):
 		fmt.Printf("No binary available for your platform (%s).\n", err.Error())
 		fmt.Println("You can build from source:")
-		fmt.Println("  go install github.com/itda-work/itda-jindo/cmd/jd@latest")
+		fmt.Println("  go install github.com/itda-work/jindo/cmd/jd@latest")
 		return err
 	default:
 		printScriptHint()

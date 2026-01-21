@@ -1,4 +1,4 @@
-module github.com/itda-work/itda-jindo
+module github.com/itda-work/jindo
 
 go 1.25.5
 
