@@ -130,11 +130,20 @@ func runHooksAdapt(cmd *cobra.Command, args []string) error {
 	// Show tip about customizing the prompt
 	fmt.Printf("💡 Tip: Customize this prompt with: jd prompts edit adapt-hook\n")
 	fmt.Println()
+	fmt.Println("🤖 Starting AI conversation to customize your hook...")
+	fmt.Println("   - Describe what changes you want")
+	fmt.Println("   - AI will ask clarifying questions")
+	fmt.Println("   - Type 'exit' or Ctrl+C to finish")
+	fmt.Println()
 
-	// Run claude command with the system prompt
+	// Initial prompt to make Claude start the conversation
+	initialPrompt := fmt.Sprintf("I want to customize the '%s' hook. Please start by asking me about my specific needs and how I'd like to adapt this hook to my workflow.", hookName)
+
+	// Run claude command with the system prompt and initial message
 	claudeCmd := exec.Command("claude",
 		"--system-prompt", systemPrompt.String(),
 		"--allowedTools", "Edit,Read,Write,Bash",
+		"-p", initialPrompt,
 	)
 	claudeCmd.Stdin = os.Stdin
 	claudeCmd.Stdout = os.Stdout
