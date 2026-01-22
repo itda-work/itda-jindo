@@ -1,12 +1,13 @@
 ---
 number: 35
 title: 'feat: jd claudemd tidy - CLAUDE.md 정리/최적화 명령'
-state: open
+state: done
 labels:
   - feature
 assignees: []
 created_at: '2026-01-21T17:20:40Z'
-updated_at: '2026-01-21T17:20:40Z'
+updated_at: '2026-01-22T14:56:45Z'
+closed_at: '2026-01-22T14:56:45Z'
 ---
 
 ## 개요
