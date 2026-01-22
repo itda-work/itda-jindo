@@ -13,10 +13,11 @@ import (
 type GuideType string
 
 const (
-	TypeSkill   GuideType = "skills"
-	TypeHook    GuideType = "hooks"
-	TypeAgent   GuideType = "agents"
-	TypeCommand GuideType = "commands"
+	TypeSkill    GuideType = "skills"
+	TypeHook     GuideType = "hooks"
+	TypeAgent    GuideType = "agents"
+	TypeCommand  GuideType = "commands"
+	TypeClaudemd GuideType = "claudemd"
 )
 
 // Guide represents a cached guide
