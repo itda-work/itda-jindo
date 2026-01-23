@@ -445,30 +445,42 @@ func (s *Store) Browse(namespace string, typeFilter PackageType) ([]BrowseItem, 
 	return items, nil
 }
 
-// scanSkills scans the skills directory for skill packages.
+// scanSkills scans the skills directories for skill packages.
+// It checks both root-level skills/ and .claude/skills/ directories.
 func (s *Store) scanSkills(repoPath string) ([]BrowseItem, error) {
-	skillsDir := filepath.Join(repoPath, "skills")
-	entries, err := os.ReadDir(skillsDir)
-	if err != nil {
-		return nil, err
+	var items []BrowseItem
+
+	// Directories to scan: root-level and .claude/ subdirectory
+	scanDirs := []struct {
+		dir    string
+		prefix string
+	}{
+		{filepath.Join(repoPath, "skills"), "skills/"},
+		{filepath.Join(repoPath, ".claude", "skills"), ".claude/skills/"},
 	}
 
-	var items []BrowseItem
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
+	for _, sd := range scanDirs {
+		entries, err := os.ReadDir(sd.dir)
+		if err != nil {
+			continue // Directory doesn't exist, skip
 		}
 
-		skillDir := filepath.Join(skillsDir, entry.Name())
-		// Check for SKILL.md or skill.md
-		for _, name := range []string{"SKILL.md", "skill.md"} {
-			if _, err := os.Stat(filepath.Join(skillDir, name)); err == nil {
-				items = append(items, BrowseItem{
-					Name: entry.Name(),
-					Path: "skills/" + entry.Name(),
-					Type: TypeSkill,
-				})
-				break
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				continue
+			}
+
+			skillDir := filepath.Join(sd.dir, entry.Name())
+			// Check for SKILL.md or skill.md
+			for _, name := range []string{"SKILL.md", "skill.md"} {
+				if _, err := os.Stat(filepath.Join(skillDir, name)); err == nil {
+					items = append(items, BrowseItem{
+						Name: entry.Name(),
+						Path: sd.prefix + entry.Name(),
+						Type: TypeSkill,
+					})
+					break
+				}
 			}
 		}
 	}
@@ -476,82 +488,186 @@ func (s *Store) scanSkills(repoPath string) ([]BrowseItem, error) {
 	return items, nil
 }
 
-// scanCommands scans the commands directory for command packages.
+// scanCommands scans the commands directories for command packages.
+// It checks both root-level commands/ and .claude/commands/ directories.
+// Supports one level of nesting (e.g., commands/game/init.md -> game:init).
 func (s *Store) scanCommands(repoPath string) ([]BrowseItem, error) {
-	commandsDir := filepath.Join(repoPath, "commands")
-	entries, err := os.ReadDir(commandsDir)
-	if err != nil {
-		return nil, err
+	var items []BrowseItem
+
+	// Directories to scan: root-level and .claude/ subdirectory
+	scanDirs := []struct {
+		dir    string
+		prefix string
+	}{
+		{filepath.Join(repoPath, "commands"), "commands/"},
+		{filepath.Join(repoPath, ".claude", "commands"), ".claude/commands/"},
 	}
 
+	for _, sd := range scanDirs {
+		entries, err := os.ReadDir(sd.dir)
+		if err != nil {
+			continue // Directory doesn't exist, skip
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() {
+				// Scan one level of subdirectory
+				subItems := s.scanCommandsSubdir(sd.dir, sd.prefix, entry.Name())
+				items = append(items, subItems...)
+				continue
+			}
+			if !strings.HasSuffix(entry.Name(), ".md") {
+				continue
+			}
+
+			name := strings.TrimSuffix(entry.Name(), ".md")
+			items = append(items, BrowseItem{
+				Name: name,
+				Path: sd.prefix + entry.Name(),
+				Type: TypeCommand,
+			})
+		}
+	}
+
+	return items, nil
+}
+
+// scanCommandsSubdir scans a subdirectory within commands for .md files.
+// Files are named as "subdir:filename" (e.g., game:init for game/init.md).
+func (s *Store) scanCommandsSubdir(parentDir, prefix, subdir string) []BrowseItem {
 	var items []BrowseItem
+
+	subdirPath := filepath.Join(parentDir, subdir)
+	entries, err := os.ReadDir(subdirPath)
+	if err != nil {
+		return nil
+	}
+
 	for _, entry := range entries {
 		if entry.IsDir() {
-			continue
+			continue // Only one level of nesting supported
 		}
 		if !strings.HasSuffix(entry.Name(), ".md") {
 			continue
 		}
 
-		name := strings.TrimSuffix(entry.Name(), ".md")
+		baseName := strings.TrimSuffix(entry.Name(), ".md")
 		items = append(items, BrowseItem{
-			Name: name,
-			Path: "commands/" + entry.Name(),
+			Name: subdir + ":" + baseName,
+			Path: prefix + subdir + "/" + entry.Name(),
 			Type: TypeCommand,
 		})
 	}
 
+	return items
+}
+
+// scanAgents scans the agents directories for agent packages.
+// It checks both root-level agents/ and .claude/agents/ directories.
+// Supports one level of nesting (e.g., agents/dev/tester.md -> dev:tester).
+func (s *Store) scanAgents(repoPath string) ([]BrowseItem, error) {
+	var items []BrowseItem
+
+	// Directories to scan: root-level and .claude/ subdirectory
+	scanDirs := []struct {
+		dir    string
+		prefix string
+	}{
+		{filepath.Join(repoPath, "agents"), "agents/"},
+		{filepath.Join(repoPath, ".claude", "agents"), ".claude/agents/"},
+	}
+
+	for _, sd := range scanDirs {
+		entries, err := os.ReadDir(sd.dir)
+		if err != nil {
+			continue // Directory doesn't exist, skip
+		}
+
+		for _, entry := range entries {
+			if entry.IsDir() {
+				// Scan one level of subdirectory
+				subItems := s.scanAgentsSubdir(sd.dir, sd.prefix, entry.Name())
+				items = append(items, subItems...)
+				continue
+			}
+			if !strings.HasSuffix(entry.Name(), ".md") {
+				continue
+			}
+
+			name := strings.TrimSuffix(entry.Name(), ".md")
+			items = append(items, BrowseItem{
+				Name: name,
+				Path: sd.prefix + entry.Name(),
+				Type: TypeAgent,
+			})
+		}
+	}
+
 	return items, nil
 }
 
-// scanAgents scans the agents directory for agent packages.
-func (s *Store) scanAgents(repoPath string) ([]BrowseItem, error) {
-	agentsDir := filepath.Join(repoPath, "agents")
-	entries, err := os.ReadDir(agentsDir)
+// scanAgentsSubdir scans a subdirectory within agents for .md files.
+// Files are named as "subdir:filename" (e.g., dev:tester for dev/tester.md).
+func (s *Store) scanAgentsSubdir(parentDir, prefix, subdir string) []BrowseItem {
+	var items []BrowseItem
+
+	subdirPath := filepath.Join(parentDir, subdir)
+	entries, err := os.ReadDir(subdirPath)
 	if err != nil {
-		return nil, err
+		return nil
 	}
 
-	var items []BrowseItem
 	for _, entry := range entries {
 		if entry.IsDir() {
-			continue
+			continue // Only one level of nesting supported
 		}
 		if !strings.HasSuffix(entry.Name(), ".md") {
 			continue
 		}
 
-		name := strings.TrimSuffix(entry.Name(), ".md")
+		baseName := strings.TrimSuffix(entry.Name(), ".md")
 		items = append(items, BrowseItem{
-			Name: name,
-			Path: "agents/" + entry.Name(),
+			Name: subdir + ":" + baseName,
+			Path: prefix + subdir + "/" + entry.Name(),
 			Type: TypeAgent,
 		})
 	}
 
-	return items, nil
+	return items
 }
 
-// scanHooks scans the hooks directory for hook packages.
+// scanHooks scans the hooks directories for hook packages.
+// It checks both root-level hooks/ and .claude/hooks/ directories.
 func (s *Store) scanHooks(repoPath string) ([]BrowseItem, error) {
-	hooksDir := filepath.Join(repoPath, "hooks")
-	entries, err := os.ReadDir(hooksDir)
-	if err != nil {
-		return nil, err
+	var items []BrowseItem
+
+	// Directories to scan: root-level and .claude/ subdirectory
+	scanDirs := []struct {
+		dir    string
+		prefix string
+	}{
+		{filepath.Join(repoPath, "hooks"), "hooks/"},
+		{filepath.Join(repoPath, ".claude", "hooks"), ".claude/hooks/"},
 	}
 
-	var items []BrowseItem
-	for _, entry := range entries {
-		// Hooks can be shell scripts or other executable files
-		if entry.IsDir() {
-			continue
+	for _, sd := range scanDirs {
+		entries, err := os.ReadDir(sd.dir)
+		if err != nil {
+			continue // Directory doesn't exist, skip
 		}
-		name := entry.Name()
-		items = append(items, BrowseItem{
-			Name: name,
-			Path: "hooks/" + name,
-			Type: TypeHook,
-		})
+
+		for _, entry := range entries {
+			// Hooks can be shell scripts or other executable files
+			if entry.IsDir() {
+				continue
+			}
+			name := entry.Name()
+			items = append(items, BrowseItem{
+				Name: name,
+				Path: sd.prefix + name,
+				Type: TypeHook,
+			})
+		}
 	}
 
 	return items, nil
