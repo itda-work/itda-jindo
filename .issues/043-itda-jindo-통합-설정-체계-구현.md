@@ -1,12 +1,13 @@
 ---
 number: 43
 title: 'feat: itda-jindo 통합 설정 체계 구현'
-state: wip
+state: done
 labels:
   - feature
 assignees: []
 created_at: '2026-01-24T15:10:05Z'
-updated_at: '2026-01-24T15:28:04Z'
+updated_at: '2026-01-24T15:29:05Z'
+closed_at: '2026-01-24T15:29:05Z'
 ---
 
 ## Background
