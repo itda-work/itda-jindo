@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/itda-work/jindo/internal/config"
+	"github.com/itda-work/jindo/pkg/config"
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
 )
