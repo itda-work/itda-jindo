@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/itda-work/jindo/internal/agent"
-	"github.com/itda-work/jindo/internal/command"
-	"github.com/itda-work/jindo/internal/skill"
+	"github.com/itda-jindo/jindo/internal/agent"
+	"github.com/itda-jindo/jindo/internal/command"
+	"github.com/itda-jindo/jindo/internal/skill"
 	"github.com/spf13/cobra"
 )
 

@@ -10,7 +10,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/itda-work/jindo/internal/prompt"
+	"github.com/itda-jindo/jindo/internal/prompt"
 	"github.com/sergi/go-diff/diffmatchpatch"
 	"github.com/spf13/cobra"
 )

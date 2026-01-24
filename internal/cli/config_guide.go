@@ -61,7 +61,7 @@ delay = 1000
 ### 1. import
 
 ` + "```go" + `
-import "github.com/itda-work/jindo/pkg/config"
+import "github.com/itda-jindo/jindo/pkg/config"
 ` + "```" + `
 
 ### 2. 설정 로드

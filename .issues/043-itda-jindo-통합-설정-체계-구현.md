@@ -116,7 +116,7 @@ delay = 1000
 ### 다른 skills에서 사용하기
 
 ```go
-import "github.com/itda-work/jindo/pkg/config"
+import "github.com/itda-jindo/jindo/pkg/config"
 
 cfg, err := config.Load()
 if err != nil {

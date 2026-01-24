@@ -36,5 +36,5 @@ zap의 update 명령과 동일한 기능의 update 명령을 jd CLI에 추가합
 
 ## 참고
 
-- GitHub 저장소: itda-work/itda-jindo
+- GitHub 저장소: itda-jindo/itda-jindo
 - 설치 스크립트: jsdelivr CDN 사용

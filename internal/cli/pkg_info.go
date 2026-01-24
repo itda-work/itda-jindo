@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/itda-work/jindo/internal/pkg/pkgmgr"
+	"github.com/itda-jindo/jindo/internal/pkg/pkgmgr"
 	"github.com/spf13/cobra"
 )
 

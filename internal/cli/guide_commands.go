@@ -6,9 +6,9 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/itda-work/jindo/internal/command"
-	"github.com/itda-work/jindo/internal/guide"
-	"github.com/itda-work/jindo/internal/prompt"
+	"github.com/itda-jindo/jindo/internal/command"
+	"github.com/itda-jindo/jindo/internal/guide"
+	"github.com/itda-jindo/jindo/internal/prompt"
 	"github.com/spf13/cobra"
 )
 

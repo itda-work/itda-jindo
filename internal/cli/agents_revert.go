@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/itda-work/jindo/internal/agent"
+	"github.com/itda-jindo/jindo/internal/agent"
 	"github.com/spf13/cobra"
 )
 

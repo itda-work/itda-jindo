@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 
-	"github.com/itda-work/jindo/internal/prompt"
+	"github.com/itda-jindo/jindo/internal/prompt"
 	"github.com/spf13/cobra"
 )
 

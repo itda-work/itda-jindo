@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/itda-work/jindo/internal/agent"
+	"github.com/itda-jindo/jindo/internal/agent"
 	"github.com/spf13/cobra"
 )
 

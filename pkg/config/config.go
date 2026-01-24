@@ -142,7 +142,7 @@ func (c *Config) ToTOML() (string, error) {
 
 // DefaultTemplate returns the default config file template
 const DefaultTemplate = `# itda-jindo Configuration
-# https://github.com/itda-work/jindo
+# https://github.com/itda-jindo/jindo
 
 [common]
 # default_market = "kr"

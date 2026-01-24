@@ -13,9 +13,9 @@ GitHub 저장소 이름 변경에 따른 코드 내 참조 업데이트
 
 ## 변경 내용
 
-- Go 모듈 경로: github.com/itda-work/itda-jindo → github.com/itda-work/jindo
-- GitHub 저장소 참조: itda-work/itda-jindo → itda-work/jindo
-- CDN URL: itda-work/itda-jindo@main → itda-work/jindo@main
+- Go 모듈 경로: github.com/itda-jindo/itda-jindo → github.com/itda-jindo/jindo
+- GitHub 저장소 참조: itda-jindo/itda-jindo → itda-jindo/jindo
+- CDN URL: itda-jindo/itda-jindo@main → itda-jindo/jindo@main
 - 문서 업데이트: README.md, CLAUDE.md
 
 ## 유지 항목

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/itda-work/jindo/internal/prompt"
-	"github.com/itda-work/jindo/internal/skill"
+	"github.com/itda-jindo/jindo/internal/prompt"
+	"github.com/itda-jindo/jindo/internal/skill"
 	"github.com/spf13/cobra"
 )
 

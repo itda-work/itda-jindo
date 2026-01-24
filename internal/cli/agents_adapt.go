@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/itda-work/jindo/internal/agent"
-	"github.com/itda-work/jindo/internal/prompt"
+	"github.com/itda-jindo/jindo/internal/agent"
+	"github.com/itda-jindo/jindo/internal/prompt"
 	"github.com/spf13/cobra"
 )
 
