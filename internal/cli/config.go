@@ -10,7 +10,9 @@ var configCmd = &cobra.Command{
 	Short:   "Manage itda-skills configuration",
 	Long: `Manage the unified configuration for itda-skills and all skills.
 
-Configuration is stored in ~/.config/itda-skills/config.toml (TOML format).
+Configuration is stored in config.toml under the OS config directory (TOML format).
+  - Linux/macOS: ~/.config/itda-skills/config.toml
+  - Windows:     %AppData%\itda-skills\config.toml
 Use dot notation to access nested values: common.api_keys.tiingo
 
 Examples:

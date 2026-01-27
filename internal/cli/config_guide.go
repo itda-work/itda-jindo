@@ -28,7 +28,9 @@ const configGuideContent = `# itda-skills 통합 설정 활용 가이드
 
 ## 개요
 
-itda-skills는 ~/.config/itda-skills/config.toml에서 모든 skills의 설정을 통합 관리합니다.
+itda-skills는 OS별 설정 디렉토리에서 모든 skills의 설정을 통합 관리합니다.
+  - Linux/macOS: ~/.config/itda-skills/config.toml
+  - Windows:     %AppData%\itda-skills\config.toml
 각 skill은 jindo의 config 패키지를 import하여 설정을 읽고 쓸 수 있습니다.
 
 ## 설정 파일 구조

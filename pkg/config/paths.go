@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 const (
@@ -13,8 +14,17 @@ const (
 )
 
 // GetConfigDir returns the config directory path.
-// Respects XDG_CONFIG_HOME environment variable, defaults to ~/.config/itda-skills/
+// On Windows, uses os.UserConfigDir() (%AppData%).
+// On Linux/macOS, respects XDG_CONFIG_HOME, defaults to ~/.config/itda-skills/.
 func GetConfigDir() (string, error) {
+	if runtime.GOOS == "windows" {
+		configHome, err := os.UserConfigDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(configHome, AppName), nil
+	}
+
 	configHome := os.Getenv("XDG_CONFIG_HOME")
 	if configHome == "" {
 		home, err := os.UserHomeDir()
@@ -26,7 +36,9 @@ func GetConfigDir() (string, error) {
 	return filepath.Join(configHome, AppName), nil
 }
 
-// GetConfigPath returns the full config file path (~/.config/itda-skills/config.toml)
+// GetConfigPath returns the full config file path.
+// On Linux/macOS: ~/.config/itda-skills/config.toml
+// On Windows: %AppData%\itda-skills\config.toml
 func GetConfigPath() (string, error) {
 	dir, err := GetConfigDir()
 	if err != nil {
