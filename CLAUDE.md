@@ -1,182 +1,91 @@
-# jindo
+# Jindo
 
 ## zap - Local Issue Management
 
+### 중요: GitHub 이슈가 아닌 로컬 이슈 사용
+
 이 프로젝트는 로컬 이슈 관리 시스템(.issues/)을 사용합니다.
+이슈 관리 시 `gh issue` 명령이 아닌 `zap` 명령을 사용하세요. 올바른 형식이 자동으로 적용됩니다.
 
-## 중요: GitHub 이슈가 아닌 로컬 이슈 사용
+### zap CLI 명령어
 
-이슈 조회 시 `gh issue` 명령이 아닌 `zap` 명령을 사용하세요:
-
-```bash
-# ❌ 잘못된 방법
-gh issue view 10
-
-# ✅ 올바른 방법
-zap show 10
-```
-
-## .issues/ 디렉토리 구조
-
-```text
-.issues/
-├── 001-feat-some-feature.md     # state: open
-├── 002-fix-some-bug.md          # state: wip
-├── 003-feat-completed.md        # state: done
-└── 004-cancelled-task.md        # state: closed
-```
-
-이슈 상태는 파일의 YAML frontmatter에 있는 `state` 필드로 결정됩니다.
-
-## 이슈 생성 (중요!)
-
-### zap new 명령 사용 (권장)
-
-이슈 생성 시 반드시 `zap new` 명령을 사용하세요. 올바른 형식이 자동으로 적용됩니다:
+#### 명령 예시
 
 ```bash
-# 기본 사용법
-zap new "이슈 제목"
-
-# 레이블 추가
-zap new "버그 수정" -l bug -l urgent
-
-# 담당자 추가
-zap new "기능 구현" -a username
-
-# 본문 추가
-zap new "이슈 제목" --body "상세 설명 내용"
-
-# 파이프로 본문 전달 (AI 사용 시 유용)
-echo "상세 본문 내용" | zap new "이슈 제목"
-
-# 에디터로 본문 작성
-zap new "이슈 제목" --editor
-```
-
-### 수동 생성 시 정확한 형식 (zap new 사용 불가 시)
-
-수동으로 이슈를 생성해야 하는 경우, 아래 형식을 **정확히** 따르세요:
-
-```markdown
----
-number: 1
-title: '이슈 제목'
-state: open
-labels:
-  - bug
-  - urgent
-assignees:
-  - username
-created_at: 2026-01-15T00:00:00Z
-updated_at: 2026-01-15T00:00:00Z
----
-
-## 개요
-
-이슈 본문 내용...
-```
-
-**필수 검증 체크리스트:**
-
-- [ ] 파일이 `---`로 시작
-- [ ] `number`: 양의 정수, 파일명과 일치
-- [ ] `title`: 비어있지 않은 문자열 (따옴표 권장)
-- [ ] `state`: open, wip, done, closed 중 하나
-- [ ] `labels`: YAML 배열 형식 (비어있으면 `[]`)
-- [ ] `assignees`: YAML 배열 형식 (비어있으면 `[]`)
-- [ ] 날짜: RFC3339/ISO8601 형식 (`YYYY-MM-DDTHH:MM:SSZ`)
-- [ ] frontmatter가 `---`로 종료
-
-**파일명 규칙:** `NNN-slug.md`
-
-- NNN: 3자리 제로패딩 숫자 (예: 001, 024)
-- slug: 소문자, 하이픈 구분, 한글 지원
-- 예: `024-feat-user-auth.md`, `025-버그-수정.md`
-
-## zap CLI 명령어
-
-### 이슈 생성
-
-```bash
-zap new "제목"              # 새 이슈 생성
+zap new "제목"              # 새 이슈 생성 (PDCA 템플릿 자동 포함)
 zap new "제목" -l label     # 레이블과 함께 생성
 zap new "제목" -a user      # 담당자와 함께 생성
 zap new "제목" -b "본문"    # 본문과 함께 생성
-```
 
-### 목록 조회
+zap list                    # 목록 조회
+zap show 1                  # 상세보기
 
-```bash
-zap list                    # 열린 이슈 (open + wip)
-zap list --all              # 전체 이슈
-zap list --state open       # 특정 상태만
-zap list --label bug        # 레이블 필터
-zap list --assignee user    # 담당자 필터
-```
-
-### 상세 보기
-
-```bash
-zap show 1                  # 이슈 #1 상세
-zap show 1 --raw            # 원본 마크다운 출력
-```
-
-### 상태 변경
-
-상태 변경 시 파일의 frontmatter가 업데이트됩니다 (파일 위치 변경 없음):
-
-```bash
+# 상태 변경 (PDCA 워크플로우)
+# 상태 변경 시 파일의 frontmatter가 업데이트됩니다 (파일 위치 변경 없음):
 zap set open 1              # state: open (이슈 재오픈)
-zap set wip 1               # state: wip (작업 시작)
-zap set done 1              # state: done (작업 완료)
+zap set wip 1               # state: wip (작업 시작 - Do)
+zap set check 1             # state: check (자기 검증 - Check)
+zap set review 1            # state: review (외부 리뷰 - Review)
+zap set done 1              # state: done (작업 완료 - Act)
 zap set closed 1            # state: closed (취소/보류)
 ```
 
-### 상태 선택 가이드
+**PDCA 상태 모델:**
 
-| 상태     | 의미          | 사용 시점                                           |
-| -------- | ------------- | --------------------------------------------------- |
-| `open`   | 📋 대기 중    | 새로 등록된 이슈, 아직 작업 시작 전                 |
-| `wip`    | 🔄 진행 중    | 현재 작업 중인 이슈                                 |
-| `done`   | ✅ 작업 완료  | 요청한 기능/수정을 **성공적으로 구현**했을 때       |
-| `closed` | ❌ 진행 안 함 | 취소, 중복, 불필요, 범위 외로 **작업 없이 닫을 때** |
+| 상태     | PDCA   | 의미                        |
+| -------- | ------ | --------------------------- |
+| `open`   | Plan   | 계획 수립, 작업 대기        |
+| `wip`    | Do     | 구현 진행 중                |
+| `check`  | Check  | 자기 검증 (Plan 기준 대비)  |
+| `review` | Review | 외부 리뷰, 피드백 수집      |
+| `done`   | Act    | 완료, 개선 조치 기록        |
+| `closed` | -      | 취소/보류 (어느 단계에서든) |
 
 **done vs closed 핵심 구분:**
 
 - 코드를 작성/수정했다 → `done`
 - 작업 없이 닫는다 → `closed`
 
-### 검색
+**갭 발견 시 반복:** check/review에서 갭이 발견되면 `zap set wip <number>`로 되돌려 재작업할 수 있습니다.
+
+### 커밋 메시지 규칙
+
+이슈 관련 커밋은 메시지 끝에 이슈 번호를 포함하고, 구현이 완료되면 구현 내역과 이슈 파일을 함께 커밋하세요:
 
 ```bash
-zap list --search "키워드"   # 제목/내용 검색
-zap list --title-only       # 제목만 검색
+git commit -m "feat: 로그인 기능 구현 (#1)"
+git commit -m "fix: 버그 수정 (#23)"
 ```
 
-### 통계
+**Skills/Commands/Agents 사용 기록 (선택사항):**
+
+이슈 작업 중 skills, commands, agents를 사용한 경우, 커밋 메시지 하단(footer)에 기록하면 작업 컨텍스트를 유지하는 데 도움이 됩니다:
 
 ```bash
-zap stats                   # 상태별 이슈 수, 최근 활동
+git commit -m "feat: 게임 초기화 구조 구현 (#5)
+
+GDevelop 기반의 프로젝트 구조 설정 및 기본 씬 구성 완료
+
+Skills: /game:init (프로젝트 템플릿 생성)
+Commands: /clarify (요구사항 명확화)"
 ```
 
-### 마이그레이션
+포함할 정보:
 
-기존 디렉토리 기반 구조를 사용 중이라면:
+- `Skills:` - 사용한 skill과 목적 (예: `/game:init (프로젝트 템플릿)`)
+- `Commands:` - 사용한 command와 목적 (예: `/clarify (요구사항 정리)`)
+- `Agents:` - 사용한 agent와 목적 (예: `codex-exec (알고리즘 최적화)`)
 
-```bash
-zap migrate                 # 평면 구조로 마이그레이션
-zap migrate --dry-run       # 변경 사항 미리보기
-```
+### 워크플로우 (PDCA)
 
-## 워크플로우
+1. **이슈 생성 (Plan)**: `zap new "이슈 제목"`
+2. **작업 시작 (Do)**: `zap set wip <number>`
+3. **자기 검증 (Check)**: `zap set check <number>`
+4. **외부 리뷰 (Review)**: `zap set review <number>`
+5. **작업 완료 (Act)**: `zap set done <number>`
+6. **취소/보류**: `zap set closed <number>`
 
-1. **새 이슈 생성**: `zap new "이슈 제목"` 실행
-2. **작업 시작**: `zap set wip <number>` 실행
-3. **작업 완료**: `zap set done <number>` 실행
-4. **취소/보류**: `zap set closed <number>` 실행
-
-## 주의사항
+### 주의사항
 
 - **이슈 생성 시 반드시 `zap new` 명령을 사용하세요** (파싱 오류 방지)
 - 이슈 번호는 고유해야 합니다
